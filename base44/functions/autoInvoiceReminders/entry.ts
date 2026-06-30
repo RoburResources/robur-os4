@@ -3,9 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const today = new Date().toISOString().split('T')[0];
     const results = { auto_sent: 0, marked_overdue: 0, reminders_sent: 0, credit_holds_applied: 0 };
 
@@ -62,8 +59,8 @@ Deno.serve(async (req) => {
 
       await base44.asServiceRole.entities.Invoice.update(inv.id, { reminder_count: reminderCount });
 
-      // Apply credit hold after 3 reminders
-      if (reminderCount >= 3) {
+      // Apply credit hold + service suspension after 2 reminders
+      if (reminderCount >= 2) {
         try {
           const clients = await base44.asServiceRole.entities.Client.filter({ name: inv.client });
           if (clients.length > 0 && !clients[0].credit_hold) {
@@ -72,6 +69,26 @@ Deno.serve(async (req) => {
               credit_hold_reason: `Overdue invoice ${inv.invoice_no} — $${inv.total.toFixed(2)}`,
             });
             results.credit_holds_applied++;
+            // Notify operations channel about service suspension
+            try {
+              const { accessToken } = await base44.asServiceRole.connectors.getConnection('slack');
+              const channels = await fetch('https://slack.com/api/conversations.list?types=public_channel&limit=200', {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              }).then(r => r.json());
+              const opsChannel = channels.channels?.find(c => c.name.toLowerCase().includes('operations') || c.name.toLowerCase().includes('ops'));
+              if (opsChannel) {
+                await fetch('https://slack.com/api/chat.postMessage', {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    channel: opsChannel.id,
+                    text: `:no_entry: *SERVICE SUSPENSION*\nClient *${inv.client}* has been placed on credit hold after ${reminderCount} unpaid reminder(s).\nInvoice: ${inv.invoice_no} — $${inv.total.toFixed(2)}\nAll future jobs will be held until payment is received.`,
+                  }),
+                });
+              }
+            } catch (e) {
+              console.error('Slack suspension notice failed:', e.message);
+            }
           }
         } catch (e) {
           console.error('Credit hold application failed:', e.message);

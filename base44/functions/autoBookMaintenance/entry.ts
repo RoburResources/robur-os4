@@ -3,9 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const vehicles = await base44.asServiceRole.entities.Vehicle.list();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -79,7 +76,7 @@ Deno.serve(async (req) => {
         }).then(r => r.json());
         const opsChannel = channels.channels?.find(c => c.name.toLowerCase().includes('operations') || c.name.toLowerCase().includes('ops'));
         if (opsChannel) {
-          const msg = `:gear: *Auto-Maintenance Summary*\n• ${results.maintenance_created} maintenance jobs created\n• ${results.vehicles_quarantined} vehicles quarantined\n• ${results.jobs_reassigned} jobs reassigned to backup vehicles`;
+          const msg = `:gear: *Auto-Maintenance Summary*\n• ${results.maintenance_created} maintenance jobs created\n• ${results.vehicles_quarantined} vehicles quarantined\n• ${results.jobs_reassigned} jobs reassigned to backup vehicles\n\n:warning: *Drivers:* Check your vehicle status before departure. Quarantined vehicles must not be used.`;
           await fetch('https://slack.com/api/chat.postMessage', {
             method: 'POST',
             headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

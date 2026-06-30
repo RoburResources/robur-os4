@@ -41,6 +41,7 @@ const DriverScorecard = lazy(() => import("@/pages/DriverScorecard"));
 const Compliance = lazy(() => import("@/pages/Compliance"));
 const BinTracking = lazy(() => import("@/pages/BinTracking"));
 const SupplierReconciliation = lazy(() => import("@/pages/SupplierReconciliation"));
+const AgentChat = lazy(() => import("@/pages/AgentChat"));
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -97,6 +98,7 @@ const AuthenticatedApp = () => {
           <Route path="/compliance" element={<Compliance />} />
           <Route path="/bins" element={<BinTracking />} />
           <Route path="/reconciliation" element={<SupplierReconciliation />} />
+          <Route path="/agent-chat" element={<AgentChat />} />
         </Route>
       </Route>
 

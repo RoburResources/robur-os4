@@ -3,9 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json();
     const { event, data, changed_fields } = body;
 
@@ -55,6 +52,36 @@ Deno.serve(async (req) => {
         content: `Site compliance check failed: ${issues.join('; ')}`,
         shift_date: new Date().toISOString().split('T')[0],
       });
+
+      // Auto-enforce: email client "Stop Work" notice + place on credit hold
+      try {
+        const clients = await base44.asServiceRole.entities.Client.filter({ name: job.client });
+        const client = clients[0];
+        if (client) {
+          if (client.contact_email) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: client.contact_email,
+              subject: `STOP WORK NOTICE — Job ${job.job_id}`,
+              body: `Work has been automatically suspended for job ${job.job_id} (${job.title}) due to a compliance issue.\n\nIssue: ${issues.join('; ')}\n\nPlease contact Robur Resources to resolve this matter.\n\nRobur Resources`,
+            });
+          }
+          if (!client.credit_hold) {
+            await base44.asServiceRole.entities.Client.update(client.id, {
+              credit_hold: true,
+              credit_hold_reason: `Compliance failure on job ${job.job_id}: ${issues.join('; ')}`,
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Client enforcement failed:', e.message);
+      }
+
+      // Revert job to assigned (stop dispatch)
+      try {
+        await base44.asServiceRole.entities.Job.update(job.id, { status: 'assigned' });
+      } catch (e) {
+        console.error('Job revert failed:', e.message);
+      }
 
       // Alert operations via Slack
       try {

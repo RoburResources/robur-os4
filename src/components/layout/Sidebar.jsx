@@ -22,6 +22,7 @@ import {
   Award,
   Box,
   Receipt,
+  Bot,
 } from "lucide-react";
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
@@ -63,6 +64,7 @@ const navSections = [
       { label: "Payments", icon: CreditCard, path: "/finance" },
       { label: "Margins", icon: Percent, path: "/margins" },
       { label: "Reconciliation", icon: Receipt, path: "/reconciliation" },
+      { label: "Booking Agent", icon: Bot, path: "/agent-chat" },
     ],
   },
   {
