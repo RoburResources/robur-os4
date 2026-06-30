@@ -43,6 +43,18 @@
     },
     "discrepancy_notes": {
       "type": "string"
+    },
+    "xero_bill_id": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "pending",
+        "paid"
+      ],
+      "default": "unpaid"
     }
   },
   "required": [

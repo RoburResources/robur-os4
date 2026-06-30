@@ -53,6 +53,9 @@
     },
     "client_email": {
       "type": "string"
+    },
+    "xero_invoice_id": {
+      "type": "string"
     }
   },
   "required": [

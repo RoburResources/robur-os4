@@ -1,0 +1,22 @@
+{
+  "name": "IntegrationToken",
+  "type": "object",
+  "properties": {
+    "service": {
+      "type": "string"
+    },
+    "refresh_token": {
+      "type": "string"
+    },
+    "access_token": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "service",
+    "refresh_token"
+  ]
+}

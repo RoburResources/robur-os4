@@ -13,6 +13,7 @@ import { getExecutiveData } from "@/functions/getExecutiveData";
 import { base44 } from "@/api/base44Client";
 import SmartLookbackPanel from "@/components/ui/SmartLookbackPanel";
 import ClientChurnPanel from "@/components/staff/ClientChurnPanel";
+import BankingPanel from "@/components/finance/BankingPanel";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -209,23 +210,7 @@ export default function ExecutiveDashboard() {
         </motion.div>
 
         <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.4 }}>
-          <GlassCard level={2} className="p-5">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel mb-4">Quick Access</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Job Management", path: "/jobs", icon: Package },
-                { label: "Fleet Status", path: "/fleet", icon: Truck },
-                { label: "Payments", path: "/finance", icon: DollarSign },
-                { label: "Documents", path: "/documents", icon: CheckCircle },
-              ].map((q) => (
-                <Link key={q.path} to={q.path} className="group rounded-xl bg-robur-charcoal/[0.03] p-4 hover:bg-robur-yellow/10 transition-colors">
-                  <q.icon className="h-5 w-5 text-robur-charcoal mb-2" strokeWidth={1.5} />
-                  <p className="text-xs font-semibold text-robur-charcoal">{q.label}</p>
-                  <ArrowRight className="h-3 w-3 text-robur-steel mt-1 group-hover:text-robur-yellow transition-colors" />
-                </Link>
-              ))}
-            </div>
-          </GlassCard>
+          <BankingPanel />
         </motion.div>
       </div>
     </div>
