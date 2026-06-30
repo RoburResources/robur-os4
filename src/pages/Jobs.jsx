@@ -15,20 +15,32 @@ const statusOrder = ["created", "scheduled", "assigned", "dispatched", "en_route
 export default function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Realtime subscription — syncs job changes across all clients instantly
+  useEffect(() => {
+    base44.entities.Job.list()
+      .then((data) => { setJobs(data); if (data.length > 0 && !selectedJob) setSelectedJob(data[0]); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    const unsubscribe = base44.entities.Job.subscribe((event) => {
+      if (event.type === "create") {
+        setJobs((prev) => prev.some((j) => j.id === event.data.id) ? prev : [event.data, ...prev]);
+      } else if (event.type === "update") {
+        setJobs((prev) => prev.map((j) => (j.id === event.data.id ? event.data : j)));
+        setSelectedJob((prev) => (prev?.id === event.data.id ? event.data : prev));
+      } else if (event.type === "delete") {
+        setJobs((prev) => prev.filter((j) => j.id !== event.data.id));
+      }
+    });
+    return () => { if (typeof unsubscribe === "function") unsubscribe(); };
+  }, []);
   const [selectedJob, setSelectedJob] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    base44.entities.Job.list()
-      .then((data) => {
-        setJobs(data);
-        if (data.length > 0) setSelectedJob(data[0]);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+
 
   const filtered = jobs.filter(
     (j) =>

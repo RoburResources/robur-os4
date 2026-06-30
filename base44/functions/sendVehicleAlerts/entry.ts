@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
     // Check vehicles for alerts
     const vehicles = await base44.asServiceRole.entities.Vehicle.list();
     const alerts = [];
+    const maintenanceJobs = [];
 
     for (const v of vehicles) {
       if (v.fuel_pct != null && v.fuel_pct < 25) {
@@ -52,11 +53,82 @@ Deno.serve(async (req) => {
         const daysUntil = Math.ceil((serviceDate - today) / (1000 * 60 * 60 * 24));
         if (daysUntil <= 7) {
           alerts.push(`:calendar: *Service Due* — ${v.vehicle_id} (${v.type}) ${daysUntil <= 0 ? 'is OVERDUE for service' : `service due in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`}`);
+
+          // Auto-create maintenance job if overdue and no existing one
+          if (daysUntil <= 0) {
+            const existing = await base44.asServiceRole.entities.Job.filter({
+              vehicle_id: v.vehicle_id,
+              job_type: "maintenance",
+              status: { $in: ["created", "scheduled", "assigned"] }
+            }).catch(() => []);
+
+            if (existing.length === 0) {
+              const job = await base44.asServiceRole.entities.Job.create({
+                job_id: `MAINT-${v.vehicle_id}-${Date.now().toString(36)}`,
+                title: `Scheduled maintenance — ${v.vehicle_id}`,
+                client: "Internal",
+                job_type: "maintenance",
+                status: "created",
+                vehicle_id: v.vehicle_id,
+                priority: "high",
+                notes: `Auto-generated: service overdue. Vehicle type: ${v.type}.`,
+              });
+              maintenanceJobs.push(job.job_id);
+            }
+          }
         }
       }
-      if (v.health_pct != null && v.health_pct < 50) {
+      // Proactive: auto-create maintenance job when health drops below 60%
+      if (v.health_pct != null && v.health_pct < 60) {
         alerts.push(`:warning: *Vehicle Health* — ${v.vehicle_id} (${v.type}) health at ${v.health_pct}%`);
+
+        const existing = await base44.asServiceRole.entities.Job.filter({
+          vehicle_id: v.vehicle_id,
+          job_type: "maintenance",
+          status: { $in: ["created", "scheduled", "assigned"] }
+        }).catch(() => []);
+
+        if (existing.length === 0) {
+          const job = await base44.asServiceRole.entities.Job.create({
+            job_id: `MAINT-${v.vehicle_id}-${Date.now().toString(36)}`,
+            title: `Health check — ${v.vehicle_id}`,
+            client: "Internal",
+            job_type: "maintenance",
+            status: "created",
+            vehicle_id: v.vehicle_id,
+            priority: v.health_pct < 40 ? "high" : "normal",
+            notes: `Auto-generated: vehicle health at ${v.health_pct}%.`,
+          });
+          maintenanceJobs.push(job.job_id);
+        }
       }
+      // Proactive: auto-create maintenance job when odometer exceeds service interval (every 10,000 km)
+      if (v.odometer != null && v.odometer > 0 && v.odometer % 10000 < 100) {
+        const existing = await base44.asServiceRole.entities.Job.filter({
+          vehicle_id: v.vehicle_id,
+          job_type: "maintenance",
+          status: { $in: ["created", "scheduled", "assigned"] }
+        }).catch(() => []);
+
+        if (existing.length === 0) {
+          const job = await base44.asServiceRole.entities.Job.create({
+            job_id: `MAINT-${v.vehicle_id}-${Date.now().toString(36)}`,
+            title: `Odometer service — ${v.vehicle_id}`,
+            client: "Internal",
+            job_type: "maintenance",
+            status: "created",
+            vehicle_id: v.vehicle_id,
+            priority: "normal",
+            notes: `Auto-generated: odometer at ${v.odometer} km.`,
+          });
+          maintenanceJobs.push(job.job_id);
+        }
+      }
+    }
+
+    // Add summary of auto-created maintenance jobs to alerts
+    if (maintenanceJobs.length > 0) {
+      alerts.unshift(`:gear: *${maintenanceJobs.length} maintenance job${maintenanceJobs.length === 1 ? '' : 's'} auto-created*`);
     }
 
     if (alerts.length === 0) {

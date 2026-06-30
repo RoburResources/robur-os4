@@ -1,5 +1,6 @@
 import { Search, Bell, ChevronDown } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
+import OutdoorModeToggle from "@/components/ui/OutdoorModeToggle";
 
 export default function TopBar({ title, subtitle }) {
   return (
@@ -25,6 +26,9 @@ export default function TopBar({ title, subtitle }) {
             3
           </span>
         </GlassCard>
+
+        {/* Outdoor mode toggle */}
+        <OutdoorModeToggle />
 
         {/* Avatar */}
         <GlassCard level={2} className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-white/90 transition-colors">

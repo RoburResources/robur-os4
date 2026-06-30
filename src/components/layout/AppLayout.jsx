@@ -4,6 +4,8 @@ import Sidebar from "./Sidebar";
 import BottomTabs from "./BottomTabs";
 import MobileHeader from "./MobileHeader";
 import PageTransition from "@/components/ui/PageTransition";
+import QuickActionMenu from "@/components/ui/QuickActionMenu";
+import OutdoorModeToggle from "@/components/ui/OutdoorModeToggle";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RefreshCw } from "lucide-react";
@@ -44,6 +46,10 @@ export default function AppLayout() {
       {isMobile ? (
         <>
           <MobileHeader />
+          {/* Outdoor mode toggle — top right on mobile */}
+          <div className="fixed top-3 right-4 z-[55]">
+            <OutdoorModeToggle />
+          </div>
           <main
             className="min-h-screen"
             style={{
@@ -58,6 +64,7 @@ export default function AppLayout() {
             </div>
           </main>
           <BottomTabs />
+          <QuickActionMenu />
         </>
       ) : (
         <>

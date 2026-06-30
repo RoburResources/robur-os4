@@ -5,7 +5,8 @@ import DocketList from "@/components/dailylog/DocketList";
 import NotesPanel from "@/components/dailylog/NotesPanel";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { Calendar } from "lucide-react";
+import { useOfflineQueue } from "@/hooks/useOfflineQueue";
+import { Calendar, WifiOff, CloudOff } from "lucide-react";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -19,6 +20,7 @@ export default function DailyLog() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { isOnline, pendingCount } = useOfflineQueue();
 
   useEffect(() => {
     base44.auth.me().then((u) => setDriverName(u?.full_name || "")).catch(() => {});
@@ -74,6 +76,24 @@ export default function DailyLog() {
   return (
     <div className="max-w-7xl mx-auto">
       <TopBar title="Daily Log" subtitle="Shift summary compiled from dockets and service notes" />
+
+      {/* Offline indicator */}
+      {!isOnline && (
+        <motion.div {...fadeIn} className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
+          <WifiOff className="h-4 w-4 text-amber-600" />
+          <span className="text-xs font-medium text-amber-700">
+            You're offline. {pendingCount > 0 ? `${pendingCount} item${pendingCount === 1 ? '' : 's'} queued for sync.` : 'Changes will sync when reconnected.'}
+          </span>
+        </motion.div>
+      )}
+      {isOnline && pendingCount > 0 && (
+        <motion.div {...fadeIn} className="mb-4 flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-200 px-4 py-2.5">
+          <CloudOff className="h-4 w-4 text-blue-600" />
+          <span className="text-xs font-medium text-blue-700">
+            Syncing {pendingCount} queued item{pendingCount === 1 ? '' : 's'}...
+          </span>
+        </motion.div>
+      )}
 
       {/* Date + driver selector */}
       <motion.div {...fadeIn} className="flex flex-wrap items-center gap-3 mb-5">

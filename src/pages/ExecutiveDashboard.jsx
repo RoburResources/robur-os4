@@ -1,28 +1,51 @@
+import { useState, useEffect, useMemo } from "react";
 import TopBar from "@/components/layout/TopBar";
 import MetricCard from "@/components/ui/MetricCard";
 import GlassCard from "@/components/ui/GlassCard";
 import RevenueChart from "@/components/finance/RevenueChart";
 import { motion } from "framer-motion";
-import { DollarSign, Truck, Package, CheckCircle, ArrowRight, TrendingUp, AlertTriangle } from "lucide-react";
+import { DollarSign, Truck, Package, CheckCircle, ArrowRight, TrendingUp, AlertTriangle, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { getExecutiveData } from "@/functions/getExecutiveData";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
-const alerts = [
-  { severity: "critical", message: "Truck 04 service overdue", time: "2h ago" },
-  { severity: "warning", message: "3 invoices awaiting payment", time: "5h ago" },
-  { severity: "info", message: "Job JOB-1024 completed", time: "1h ago" },
-];
-
-const activity = [
-  { action: "Job Completed", detail: "JOB-1024 · Tottenham", time: "1h ago" },
-  { action: "Vehicle Dispatched", detail: "Truck 03 to Sunshine", time: "2h ago" },
-  { action: "Invoice Sent", detail: "INV-4471 to Cleanaway", time: "3h ago" },
-  { action: "Docket Processed", detail: "WB-10247 validated", time: "4h ago" },
-];
-
 export default function ExecutiveDashboard() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
+
+  useEffect(() => {
+    getExecutiveData({})
+      .then((res) => {
+        if (res.status === 403) { setForbidden(true); return; }
+        setData(res.data);
+      })
+      .catch((err) => {
+        if (err?.response?.status === 403) setForbidden(true);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const metrics = data?.metrics;
+  const alerts = data?.alerts || [];
+  const activity = data?.activity || [];
+
+  if (forbidden) {
+    return (
+      <div className="max-w-7xl mx-auto flex flex-col items-center justify-center" style={{ minHeight: "60vh" }}>
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 mb-4">
+          <Lock className="h-8 w-8 text-red-500" />
+        </div>
+        <h2 className="text-xl font-bold text-robur-charcoal mb-2">Access Restricted</h2>
+        <p className="text-sm text-robur-steel text-center max-w-sm">
+          The Executive Dashboard is only available to administrators. Contact your administrator if you believe this is an error.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       <TopBar title="Executive Dashboard" subtitle="Strategic overview · June 2026" />
@@ -32,13 +55,13 @@ export default function ExecutiveDashboard() {
           <MetricCard label="Monthly Revenue" value="$392K" change="↑ 7.4% vs May" changeType="up" icon={DollarSign} />
         </motion.div>
         <motion.div {...fadeIn} transition={{ delay: 0.05 }}>
-          <MetricCard label="Fleet Utilisation" value="72%" change="↑ 5% vs last week" changeType="up" icon={Truck} />
+          <MetricCard label="Fleet Utilisation" value={loading ? "—" : `${metrics?.fleetUtilisation ?? 0}%`} change={`${metrics?.activeVehicles ?? 0} of ${metrics?.totalVehicles ?? 0} active`} changeType="up" icon={Truck} />
         </motion.div>
         <motion.div {...fadeIn} transition={{ delay: 0.1 }}>
-          <MetricCard label="Active Jobs" value="18" change="3 ahead of schedule" changeType="up" icon={Package} />
+          <MetricCard label="Active Jobs" value={loading ? "—" : `${metrics?.activeJobs ?? 0}`} change={`${metrics?.completedThisMonth ?? 0} completed this month`} changeType="up" icon={Package} />
         </motion.div>
         <motion.div {...fadeIn} transition={{ delay: 0.15 }}>
-          <MetricCard label="On-Time Rate" value="94%" change="↑ 2pp vs May" changeType="up" icon={CheckCircle} />
+          <MetricCard label="On-Time Rate" value={loading ? "—" : `${metrics?.onTimeRate ?? 0}%`} change="vs target 90%" changeType="up" icon={CheckCircle} />
         </motion.div>
       </div>
 
@@ -54,17 +77,21 @@ export default function ExecutiveDashboard() {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel">Priority Alerts</h3>
             </div>
             <div className="space-y-3">
-              {alerts.map((a, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
-                    a.severity === "critical" ? "bg-red-400" : a.severity === "warning" ? "bg-robur-yellow" : "bg-blue-400"
-                  )} />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-robur-charcoal">{a.message}</p>
-                    <p className="text-[10px] text-robur-steel">{a.time}</p>
+              {alerts.length === 0 ? (
+                <p className="text-xs text-robur-steel/60">No active alerts</p>
+              ) : (
+                alerts.map((a, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
+                      a.severity === "critical" ? "bg-red-400" : a.severity === "warning" ? "bg-robur-yellow" : "bg-blue-400"
+                    )} />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-robur-charcoal">{a.message}</p>
+                      <p className="text-[10px] text-robur-steel">{a.time}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </GlassCard>
         </motion.div>
@@ -73,18 +100,22 @@ export default function ExecutiveDashboard() {
           <GlassCard level={2} className="p-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel mb-4">Recent Activity</h3>
             <div className="space-y-3">
-              {activity.map((a, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl bg-robur-charcoal/[0.03] p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/60">
-                    <TrendingUp className="h-4 w-4 text-robur-charcoal" strokeWidth={1.5} />
+              {activity.length === 0 ? (
+                <p className="text-xs text-robur-steel/60">No recent activity</p>
+              ) : (
+                activity.map((a, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-xl bg-robur-charcoal/[0.03] p-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/60">
+                      <TrendingUp className="h-4 w-4 text-robur-charcoal" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-robur-charcoal">{a.action}</p>
+                      <p className="text-[10px] text-robur-steel">{a.detail}</p>
+                    </div>
+                    <span className="text-[10px] text-robur-steel/60">{a.time}</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-robur-charcoal">{a.action}</p>
-                    <p className="text-[10px] text-robur-steel">{a.detail}</p>
-                  </div>
-                  <span className="text-[10px] text-robur-steel/60">{a.time}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </GlassCard>
         </motion.div>
