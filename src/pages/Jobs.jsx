@@ -41,11 +41,17 @@ export default function Jobs() {
     const currentIdx = statusOrder.indexOf(job.status);
     if (currentIdx >= statusOrder.length - 1) return;
     const nextStatus = statusOrder[currentIdx + 1];
+    // Optimistic — update UI immediately
+    setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: nextStatus } : j)));
+    setSelectedJob((prev) => (prev?.id === job.id ? { ...prev, status: nextStatus } : prev));
     try {
       const updated = await base44.entities.Job.update(job.id, { status: nextStatus });
       setJobs((prev) => prev.map((j) => (j.id === job.id ? updated : j)));
       setSelectedJob(updated);
     } catch (err) {
+      // Rollback on error
+      setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: job.status } : j)));
+      setSelectedJob((prev) => (prev?.id === job.id ? { ...prev, status: job.status } : prev));
       console.error(err);
     }
   };

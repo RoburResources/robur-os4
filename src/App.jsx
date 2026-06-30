@@ -17,22 +17,25 @@ import ResetPassword from "@/pages/ResetPassword";
 // App layout
 import AppLayout from "@/components/layout/AppLayout";
 
-// Pages
-import Dashboard from "@/pages/Dashboard";
-import StaffDashboard from "@/pages/StaffDashboard";
-import Fleet from "@/pages/Fleet";
-import Jobs from "@/pages/Jobs";
-import MapView from "@/pages/MapView";
-import ClientPortal from "@/pages/ClientPortal";
-import Finance from "@/pages/Finance";
-import Reports from "@/pages/Reports";
-import Booking from "@/pages/Booking";
-import Documents from "@/pages/Documents";
-import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
-import DMTWorkflow from "@/pages/DMTWorkflow";
-import MGTWorkflow from "@/pages/MGTWorkflow";
-import DSSWorkflow from "@/pages/DSSWorkflow";
-import DailyLog from "@/pages/DailyLog";
+import { lazy, Suspense } from "react";
+import PageLoader from "@/components/ui/PageLoader";
+
+// Pages (lazy-loaded for code splitting)
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const StaffDashboard = lazy(() => import("@/pages/StaffDashboard"));
+const Fleet = lazy(() => import("@/pages/Fleet"));
+const Jobs = lazy(() => import("@/pages/Jobs"));
+const MapView = lazy(() => import("@/pages/MapView"));
+const ClientPortal = lazy(() => import("@/pages/ClientPortal"));
+const Finance = lazy(() => import("@/pages/Finance"));
+const Reports = lazy(() => import("@/pages/Reports"));
+const Booking = lazy(() => import("@/pages/Booking"));
+const Documents = lazy(() => import("@/pages/Documents"));
+const ExecutiveDashboard = lazy(() => import("@/pages/ExecutiveDashboard"));
+const DMTWorkflow = lazy(() => import("@/pages/DMTWorkflow"));
+const MGTWorkflow = lazy(() => import("@/pages/MGTWorkflow"));
+const DSSWorkflow = lazy(() => import("@/pages/DSSWorkflow"));
+const DailyLog = lazy(() => import("@/pages/DailyLog"));
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -60,6 +63,7 @@ const AuthenticatedApp = () => {
   }
 
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -88,6 +92,7 @@ const AuthenticatedApp = () => {
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </Suspense>
   );
 };
 
