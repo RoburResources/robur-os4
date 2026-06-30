@@ -3,6 +3,7 @@ import GlassCard from "@/components/ui/GlassCard";
 import { StickyNote, Plus, AlertTriangle, CheckCircle, Info, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
+import VoiceNoteButton from "@/components/ui/VoiceNoteButton";
 
 const noteTypeConfig = {
   general: { label: "General", icon: Info, color: "text-robur-steel", bg: "bg-robur-steel/10" },
@@ -73,10 +74,22 @@ export default function NotesPanel({ notes, loading, driverName, shiftDate, onAd
               );
             })}
           </div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-medium text-robur-steel">Note details</span>
+            <VoiceNoteButton
+              onResult={({ text, noteType, error }) => {
+                if (error) return;
+                if (text) {
+                  setContent(text);
+                  setNoteType(noteType);
+                }
+              }}
+            />
+          </div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="What happened on this job?"
+            placeholder="What happened on this job? Tap Voice to dictate..."
             rows={3}
             className="w-full rounded-lg border border-robur-light/30 bg-white/60 px-3 py-2 text-xs text-robur-charcoal placeholder:text-robur-steel/40 focus:outline-none focus:ring-2 focus:ring-robur-yellow/30 resize-none"
           />

@@ -3,13 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Navigation, FileText, MapPin, X,
-  Truck, Wrench, ArrowRight, Camera
+  Truck, Wrench, ArrowRight, Camera, Locate
 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 /**
  * QuickActionMenu — persistent, context-aware floating action button.
  * Listens for `robur:context` custom events from pages to tailor actions
  * to the specific asset/job currently being viewed.
+ * Also detects "Near-Me" context via GPS + fleet data to suggest
+ * the most relevant action for the driver's current location.
  */
 
 window.__roburContext = null;
@@ -24,6 +27,7 @@ export default function QuickActionMenu() {
   const location = useLocation();
   const navigate = useNavigate();
   const [context, setContext] = useState(null);
+  const [nearMeAction, setNearMeAction] = useState(null);
 
   useEffect(() => {
     const handler = (e) => setContext(e.detail);
@@ -37,10 +41,53 @@ export default function QuickActionMenu() {
     window.__roburContext = null;
   }, [location.pathname]);
 
+  // Near-Me: detect proximity to known sites via GPS + fleet data
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    let cancelled = false;
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        if (cancelled) return;
+        const { latitude, longitude } = pos.coords;
+        try {
+          const vehicles = await base44.entities.Vehicle.list();
+          let nearest = null;
+          let minDist = Infinity;
+          for (const v of vehicles) {
+            if (v.latitude == null || v.longitude == null) continue;
+            const dist = Math.hypot(v.latitude - latitude, v.longitude - longitude);
+            if (dist < minDist) { minDist = dist; nearest = v; }
+          }
+          if (nearest && minDist < 0.005) {
+            setNearMeAction({
+              label: "Log Docket",
+              icon: Camera,
+              action: () => navigate("/documents"),
+              hint: `Near ${nearest.vehicle_id}`,
+            });
+          } else {
+            setNearMeAction({
+              label: "Site Note",
+              icon: FileText,
+              action: () => navigate("/daily-log"),
+              hint: "On site",
+            });
+          }
+        } catch {
+          setNearMeAction(null);
+        }
+      },
+      () => setNearMeAction(null),
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+
+    return () => { cancelled = true; };
+  }, [navigate]);
+
   const getActions = () => {
     const path = location.pathname;
 
-    // Context-aware: if a specific job/vehicle is selected
     if (context?.type === "job") {
       return [
         { label: "View on Map", icon: MapPin, action: () => navigate("/map") },
@@ -56,7 +103,6 @@ export default function QuickActionMenu() {
       ];
     }
 
-    // Page-aware fallback
     if (path === "/jobs" || path === "/driver") {
       return [
         { label: "New Job", icon: Plus, action: () => navigate("/booking") },
@@ -85,7 +131,8 @@ export default function QuickActionMenu() {
     ];
   };
 
-  const actions = getActions();
+  const baseActions = getActions();
+  const allActions = nearMeAction ? [nearMeAction, ...baseActions] : baseActions;
   const hasContext = !!context;
 
   return (
@@ -98,9 +145,9 @@ export default function QuickActionMenu() {
             exit={{ opacity: 0, y: 10 }}
             className="absolute bottom-14 right-0 space-y-2"
           >
-            {actions.map((a, i) => (
+            {allActions.map((a, i) => (
               <motion.button
-                key={a.label}
+                key={a.label + i}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
@@ -111,8 +158,15 @@ export default function QuickActionMenu() {
                 }}
                 className="flex items-center gap-3 rounded-xl glass-3 px-4 py-2.5 shadow-lg active:scale-95 transition-transform"
               >
-                <a.icon className="h-4 w-4 text-robur-charcoal" strokeWidth={2} />
-                <span className="text-sm font-semibold text-robur-charcoal">{a.label}</span>
+                {i === 0 && nearMeAction ? (
+                  <Locate className="h-4 w-4 text-robur-yellow" strokeWidth={2} />
+                ) : (
+                  <a.icon className="h-4 w-4 text-robur-charcoal" strokeWidth={2} />
+                )}
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-semibold text-robur-charcoal">{a.label}</span>
+                  {a.hint && <span className="text-[9px] text-robur-steel">{a.hint}</span>}
+                </div>
               </motion.button>
             ))}
           </motion.div>

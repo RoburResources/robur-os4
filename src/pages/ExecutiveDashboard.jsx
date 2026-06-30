@@ -10,6 +10,8 @@ import { DollarSign, Truck, Package, CheckCircle, ArrowRight, TrendingUp, AlertT
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { getExecutiveData } from "@/functions/getExecutiveData";
+import { base44 } from "@/api/base44Client";
+import SmartLookbackPanel from "@/components/ui/SmartLookbackPanel";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -17,6 +19,31 @@ export default function ExecutiveDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
+  const [roleView, setRoleView] = useState("admin");
+
+  const handleQuickResolve = async (alert) => {
+    const action = alert.quickAction;
+    if (action?.type === "assign_backup") {
+      // Find an idle vehicle and assign it to the affected job
+      try {
+        const idleVehicles = await base44.entities.Vehicle.filter({ status: "idle" });
+        if (idleVehicles.length > 0 && alert.jobId) {
+          await base44.entities.Job.update(alert.jobId, { vehicle_id: idleVehicles[0].vehicle_id, status: "assigned" });
+        }
+      } catch {}
+    } else if (action?.type === "message_client") {
+      // Send a client notification via email
+      try {
+        if (alert.clientEmail) {
+          await base44.integrations.Core.SendEmail({
+            to: alert.clientEmail,
+            subject: `Update on your job — ${alert.message}`,
+            body: `We're aware of the issue and are actively resolving it. ${alert.detail || ""}`,
+          });
+        }
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     getExecutiveData({})
@@ -52,19 +79,50 @@ export default function ExecutiveDashboard() {
     <div className="max-w-7xl mx-auto">
       <TopBar title="Executive Dashboard" subtitle="Strategic overview · June 2026" />
 
+      {/* Role-based view toggle */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-robur-steel">View:</span>
+        {[
+          { key: "admin", label: "All" },
+          { key: "fleet", label: "Fleet" },
+          { key: "finance", label: "Finance" },
+        ].map((r) => (
+          <button
+            key={r.key}
+            onClick={() => setRoleView(r.key)}
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors",
+              roleView === r.key
+                ? "bg-robur-charcoal text-white"
+                : "bg-robur-charcoal/5 text-robur-steel hover:bg-robur-charcoal/10"
+            )}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <motion.div {...fadeIn} transition={{ delay: 0 }}>
-          <MetricCard label="Monthly Revenue" value="$392K" change="↑ 7.4% vs May" changeType="up" icon={DollarSign} />
-        </motion.div>
-        <motion.div {...fadeIn} transition={{ delay: 0.05 }}>
-          <MetricCard label="Fleet Utilisation" value={loading ? "—" : `${metrics?.fleetUtilisation ?? 0}%`} change={`${metrics?.activeVehicles ?? 0} of ${metrics?.totalVehicles ?? 0} active`} changeType="up" icon={Truck} />
-        </motion.div>
-        <motion.div {...fadeIn} transition={{ delay: 0.1 }}>
-          <MetricCard label="Active Jobs" value={loading ? "—" : `${metrics?.activeJobs ?? 0}`} change={`${metrics?.completedThisMonth ?? 0} completed this month`} changeType="up" icon={Package} />
-        </motion.div>
-        <motion.div {...fadeIn} transition={{ delay: 0.15 }}>
-          <MetricCard label="On-Time Rate" value={loading ? "—" : `${metrics?.onTimeRate ?? 0}%`} change="vs target 90%" changeType="up" icon={CheckCircle} />
-        </motion.div>
+        {(roleView === "admin" || roleView === "finance") && (
+          <motion.div {...fadeIn} transition={{ delay: 0 }}>
+            <MetricCard label="Monthly Revenue" value="$392K" change="↑ 7.4% vs May" changeType="up" icon={DollarSign} />
+          </motion.div>
+        )}
+        {(roleView === "admin" || roleView === "fleet") && (
+          <motion.div {...fadeIn} transition={{ delay: 0.05 }}>
+            <MetricCard label="Fleet Utilisation" value={loading ? "—" : `${metrics?.fleetUtilisation ?? 0}%`} change={`${metrics?.activeVehicles ?? 0} of ${metrics?.totalVehicles ?? 0} active`} changeType="up" icon={Truck} />
+          </motion.div>
+        )}
+        {(roleView === "admin" || roleView === "fleet") && (
+          <motion.div {...fadeIn} transition={{ delay: 0.1 }}>
+            <MetricCard label="Active Jobs" value={loading ? "—" : `${metrics?.activeJobs ?? 0}`} change={`${metrics?.completedThisMonth ?? 0} completed this month`} changeType="up" icon={Package} />
+          </motion.div>
+        )}
+        {(roleView === "admin" || roleView === "fleet") && (
+          <motion.div {...fadeIn} transition={{ delay: 0.15 }}>
+            <MetricCard label="On-Time Rate" value={loading ? "—" : `${metrics?.onTimeRate ?? 0}%`} change="vs target 90%" changeType="up" icon={CheckCircle} />
+          </motion.div>
+        )}
       </div>
 
       {/* What's Next — predictive 30-minute lookahead */}
@@ -102,6 +160,13 @@ export default function ExecutiveDashboard() {
                         type: "fuel",
                         text: "Alert sent to operations channel",
                       } : null,
+                      quickAction: a.severity === "critical" ? {
+                        label: "Assign Backup Vehicle",
+                        onResolve: () => handleQuickResolve(a),
+                      } : a.severity === "warning" ? {
+                        label: "Message Client",
+                        onResolve: () => handleQuickResolve(a),
+                      } : null,
                     }}
                   />
                 ))
@@ -135,6 +200,10 @@ export default function ExecutiveDashboard() {
         </motion.div>
 
         <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.35 }}>
+          <SmartLookbackPanel />
+        </motion.div>
+
+        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.4 }}>
           <GlassCard level={2} className="p-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel mb-4">Quick Access</h3>
             <div className="grid grid-cols-2 gap-3">

@@ -7,6 +7,7 @@ import AssetDetails from "@/components/fleet/AssetDetails";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import WorkflowFlow from "@/components/ui/WorkflowFlow";
+import MaintenanceForecast from "@/components/fleet/MaintenanceForecast";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -31,6 +32,10 @@ export default function Fleet() {
       <WorkflowFlow steps={["Monitor", "Schedule", "Maintenance", "Inspect", "Close", "End"]} currentStep={0} />
 
       <div className="grid grid-cols-12 gap-4" style={{ minHeight: "calc(100vh - 220px)" }}>
+        <motion.div className="col-span-12 mb-2" {...fadeIn} transition={{ delay: 0.12 }}>
+          <MaintenanceForecast vehicles={vehicles} />
+        </motion.div>
+
         <motion.div className="col-span-12 lg:col-span-3" {...fadeIn}>
           <FleetList
             vehicles={vehicles}

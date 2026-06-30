@@ -1,19 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Check, X, ScanLine, RefreshCw, Loader2 } from "lucide-react";
+import { Camera, Check, X, ScanLine, RefreshCw, Loader2, WifiOff, CloudUpload } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
 import { validateDocket } from "@/functions/validateDocket";
 import { base44 } from "@/api/base44Client";
+import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 
 /**
  * CameraDocketCapture — camera-first docket ingestion.
  * The camera activates immediately on mount. A "ghost frame" overlay helps
  * the user align the docket. Auto-captures when the frame is filled,
  * then submits to the AI validator automatically.
+ *
+ * Supports predictive pre-fill (job data merged into result) and
+ * offline draft mode (queues the docket for sync when reconnected).
  */
 
-export default function CameraDocketCapture({ onCaptured, onClose }) {
+export default function CameraDocketCapture({ onCaptured, onClose, prefillData }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -23,7 +27,9 @@ export default function CameraDocketCapture({ onCaptured, onClose }) {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isDraft, setIsDraft] = useState(false);
   const autoCaptureTimer = useRef(null);
+  const { isOnline, create: offlineCreate, pendingCount, flushQueue } = useOfflineQueue();
 
   // Start camera on mount
   useEffect(() => {
@@ -108,14 +114,38 @@ export default function CameraDocketCapture({ onCaptured, onClose }) {
   const processDocket = async (file) => {
     setProcessing(true);
     setError(null);
+
+    // Offline draft mode — queue the docket for later sync
+    if (!isOnline) {
+      const draftDocket = {
+        docket_no: prefillData?.job_id ? `${prefillData.job_id}-DRAFT` : `DRAFT-${Date.now()}`,
+        source: "camera_draft",
+        date: new Date().toISOString().split("T")[0],
+        vehicle: prefillData?.vehicle_id || "",
+        driver: prefillData?.driver_name || "",
+        site: prefillData?.site_address || prefillData?.client || "",
+        status: "pending",
+        ...prefillData,
+      };
+      await offlineCreate("Docket", draftDocket);
+      setIsDraft(true);
+      setResult({ docket: draftDocket, status: "draft" });
+      setProcessing(false);
+      onCaptured?.(draftDocket);
+      return;
+    }
+
     try {
       // Upload the image
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       // Validate via OCR
       const res = await validateDocket({ file_url });
-      setResult(res.data);
+      // Merge predictive pre-fill data into the result
+      const mergedDocket = { ...prefillData, ...res.data?.docket };
+      const mergedResult = { ...res.data, docket: mergedDocket };
+      setResult(mergedResult);
       if (res.data?.status === "validated" || res.data?.status === "created") {
-        onCaptured?.(res.data.docket);
+        onCaptured?.(mergedDocket);
       }
     } catch (err) {
       setError("Could not read docket. Try retaking with better lighting.");
@@ -232,12 +262,35 @@ export default function CameraDocketCapture({ onCaptured, onClose }) {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 mb-3">
-                  <Check className="h-6 w-6 text-white" strokeWidth={3} />
-                </div>
-                <p className="text-sm font-bold text-white">Docket Validated</p>
+                {isDraft ? (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 mb-3">
+                    <WifiOff className="h-6 w-6 text-white" strokeWidth={2.5} />
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 mb-3">
+                    <Check className="h-6 w-6 text-white" strokeWidth={3} />
+                  </div>
+                )}
+                <p className="text-sm font-bold text-white">
+                  {isDraft ? "Saved as Draft" : "Docket Validated"}
+                </p>
                 {result.docket?.docket_no && (
                   <p className="text-[10px] text-white/70 mt-1">{result.docket.docket_no}</p>
+                )}
+                {isDraft ? (
+                  <p className="text-[10px] text-amber-300 mt-1 max-w-[200px] text-center">
+                    Offline — will sync when reconnected ({pendingCount} queued)
+                  </p>
+                ) : prefillData ? (
+                  <p className="text-[10px] text-white/50 mt-1">Pre-filled from job data</p>
+                ) : null}
+                {isDraft && (
+                  <button
+                    onClick={() => flushQueue()}
+                    className="mt-3 flex items-center gap-1.5 rounded-lg bg-robur-yellow px-3 py-1.5 text-xs font-bold text-robur-charcoal"
+                  >
+                    <CloudUpload className="h-3 w-3" /> Sync Now
+                  </button>
                 )}
                 <button onClick={retake} className="mt-4 flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/30 transition-colors">
                   <RefreshCw className="h-3 w-3" /> Capture Another

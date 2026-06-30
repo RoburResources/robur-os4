@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Clock, TrendingUp, Truck, DollarSign, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import EtaConfidenceBadge from "@/components/ui/EtaConfidenceBadge";
 
 /**
  * WhatNextPanel — Predictive UI for the executive dashboard.
@@ -111,8 +112,9 @@ export default function WhatNextPanel() {
                       </p>
                     </div>
 
-                    {/* Status icon */}
+                    {/* ETA confidence + status icon */}
                     <div className="flex items-center gap-1 shrink-0">
+                      <EtaConfidenceBadge job={job} size="sm" />
                       {job.vehicle_id ? (
                         <Truck className="h-3 w-3 text-emerald-500" strokeWidth={2} />
                       ) : (

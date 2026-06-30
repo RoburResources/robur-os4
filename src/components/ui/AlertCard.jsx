@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle, Info, CheckCircle2, Wrench, Truck, Fuel,
-  Calendar, ArrowRight, Link as LinkIcon
+  Calendar, ArrowRight, Link as LinkIcon, Zap
 } from "lucide-react";
 
 /**
@@ -66,6 +66,19 @@ export default function AlertCard({ alert, onAction }) {
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Quick Action: one-click resolve — executes inline without navigating away */}
+      {alert.quickAction && (
+        <div className="border-t border-robur-light/20 px-3 py-2">
+          <button
+            onClick={() => alert.quickAction.onResolve?.(alert)}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-robur-charcoal px-3 py-1.5 text-[10px] font-bold text-white hover:bg-robur-charcoal/90 active:scale-95 transition-all"
+          >
+            <Zap className="h-3 w-3" strokeWidth={2.5} />
+            {alert.quickAction.label}
+          </button>
         </div>
       )}
     </motion.div>

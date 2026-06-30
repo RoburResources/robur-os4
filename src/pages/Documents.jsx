@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TopBar from "@/components/layout/TopBar";
 import GlassCard from "@/components/ui/GlassCard";
 import CameraDocketCapture from "@/components/ui/CameraDocketCapture";
@@ -19,6 +19,7 @@ import {
   Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { base44 } from "@/api/base44Client";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -54,6 +55,29 @@ export default function Documents() {
   const [generated, setGenerated] = useState([true, true, true]);
   const [packSent, setPackSent] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [prefillData, setPrefillData] = useState(null);
+
+  // Predictive pre-fill: fetch the driver's current active job to pre-populate docket fields
+  useEffect(() => {
+    async function loadPrefill() {
+      try {
+        const user = await base44.auth.me();
+        const jobs = await base44.entities.Job.filter({ status: "en_route" });
+        const myJob = jobs.find((j) =>
+          j.vehicle_id?.toLowerCase().includes((user?.full_name || "").split(" ")[0]?.toLowerCase())
+        ) || jobs[0];
+        if (myJob) {
+          setPrefillData({
+            job_id: myJob.job_id,
+            vehicle: myJob.vehicle_id,
+            site: myJob.site_address || myJob.client,
+            driver: user?.full_name,
+          });
+        }
+      } catch {}
+    }
+    loadPrefill();
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -77,7 +101,11 @@ export default function Documents() {
                 Close
               </button>
             </div>
-            <CameraDocketCapture onCaptured={() => setShowCamera(false)} onClose={() => setShowCamera(false)} />
+            <CameraDocketCapture
+              onCaptured={() => setShowCamera(false)}
+              onClose={() => setShowCamera(false)}
+              prefillData={prefillData}
+            />
           </motion.div>
         )}
       </AnimatePresence>

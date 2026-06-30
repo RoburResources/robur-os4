@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { Calendar, WifiOff, CloudOff } from "lucide-react";
+import ShiftHandover from "@/components/dailylog/ShiftHandover";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -109,6 +110,16 @@ export default function DailyLog() {
         <div className="rounded-xl bg-robur-charcoal/[0.03] px-4 py-2.5 text-sm">
           <span className="text-[11px] font-medium text-robur-steel">Driver: </span>
           <span className="font-semibold text-robur-charcoal">{driverName || "—"}</span>
+        </div>
+        <div className="ml-auto">
+          <ShiftHandover
+            driverName={driverName}
+            shiftDate={shiftDate}
+            dockets={dockets}
+            notes={notes}
+            totalNetWeight={totalNetWeight}
+            hoursWorked={hoursWorked}
+          />
         </div>
       </motion.div>
 

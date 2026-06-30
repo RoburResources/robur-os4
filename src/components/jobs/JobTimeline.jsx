@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Clock, GripHorizontal } from "lucide-react";
+import EtaConfidenceBadge from "@/components/ui/EtaConfidenceBadge";
 
 /**
  * JobTimeline — interactive horizontal timeline where job blocks can be
@@ -142,6 +143,7 @@ export default function JobTimeline({ jobs = [], onReschedule }) {
               <div className="flex items-center gap-1 px-1.5 h-full overflow-hidden">
                 <GripHorizontal className="h-2.5 w-2.5 shrink-0 opacity-50" />
                 <span className="text-[8px] font-bold truncate">{job.job_id}</span>
+                <EtaConfidenceBadge job={job} size="sm" />
               </div>
             </motion.div>
           );
