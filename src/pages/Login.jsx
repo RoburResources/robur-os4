@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { getRoleBasedHome } from "@/lib/RoleBasedRouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,9 @@ export default function Login() {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
-      window.location.href = "/";
+      const user = await base44.auth.me();
+      const destination = getRoleBasedHome(user?.role || 'user');
+      window.location.href = destination;
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {
@@ -38,12 +41,9 @@ export default function Login() {
       title="Welcome back"
       subtitle="Log in to your account"
       footer={
-        <>
-          Don't have an account?{" "}
-          <Link to="/register" className="text-primary font-medium hover:underline">
-            Create one
-          </Link>
-        </>
+        <p className="text-xs text-muted-foreground">
+          This application is invite-only. Contact your administrator for access.
+        </p>
       }
     >
       <Button

@@ -10,9 +10,9 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Auth pages
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import InviteOnly from "@/pages/InviteOnly";
 
 // App layout
 import AppLayout from "@/components/layout/AppLayout";
@@ -72,9 +72,10 @@ const AuthenticatedApp = () => {
     <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/invite-only" element={<InviteOnly />} />
+      <Route path="/register" element={<Navigate to="/invite-only" replace />} />
 
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppLayout />}>
