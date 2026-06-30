@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { getRoleBasedHome } from "@/lib/RoleBasedRouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,9 +20,7 @@ export default function Login() {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
-      const user = await base44.auth.me();
-      const destination = getRoleBasedHome(user?.role || 'user');
-      window.location.href = destination;
+      window.location.href = "/";
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {
