@@ -4,6 +4,7 @@ import RevenueChart from "@/components/finance/RevenueChart";
 import InvoiceList from "@/components/finance/InvoiceList";
 import SupplierPayments from "@/components/finance/SupplierPayments";
 import DynamicPricingPanel from "@/components/finance/DynamicPricingPanel";
+import RevolutPanel from "@/components/finance/RevolutPanel";
 import WorkflowFlow from "@/components/ui/WorkflowFlow";
 import { motion } from "framer-motion";
 import { DollarSign, TrendingUp, Clock, CreditCard } from "lucide-react";
@@ -48,13 +49,16 @@ export default function Finance() {
           <InvoiceList />
         </motion.div>
 
-        {/* Dynamic Pricing Engine */}
+        {/* Revolut & Dynamic Pricing */}
         <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.35 }}>
+          <RevolutPanel />
+        </motion.div>
+        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.35 }}>
           <DynamicPricingPanel />
         </motion.div>
 
         {/* Quick links to margin analysis & reconciliation */}
-        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.4 }}>
+        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.4 }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
             <Link to="/margins" className="group rounded-2xl bg-gradient-to-br from-robur-charcoal to-robur-charcoal/80 p-5 hover:scale-[1.02] transition-transform">
               <TrendingUp className="h-6 w-6 text-robur-yellow mb-3" strokeWidth={1.5} />
