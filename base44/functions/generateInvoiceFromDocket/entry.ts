@@ -55,6 +55,22 @@ Deno.serve(async (req) => {
       due_date: dueDate
     });
 
+    // Auto-send invoice email to client
+    try {
+      const clients = await base44.asServiceRole.entities.Client.filter({ name: invoice.client });
+      const clientEmail = clients[0]?.contact_email;
+      if (clientEmail) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: clientEmail,
+          subject: `Invoice ${invoiceNo} from Robur Resources`,
+          body: `Your invoice ${invoiceNo} for $${total.toFixed(2)} is now available.\n\nAmount due: $${total.toFixed(2)} (incl. GST)\nDue date: ${dueDate}\n\nA payment link will follow shortly.\n\nThank you for your business.\nRobur Resources`,
+        });
+        await base44.asServiceRole.entities.Invoice.update(invoice.id, { status: 'sent', client_email: clientEmail });
+      }
+    } catch (e) {
+      console.error('Failed to send invoice email:', e.message);
+    }
+
     return Response.json({ success: true, invoice });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

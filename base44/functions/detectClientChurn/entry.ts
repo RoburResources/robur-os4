@@ -46,7 +46,28 @@ Deno.serve(async (req) => {
       })
       .sort((a, b) => b.drop_pct - a.drop_pct);
 
-    return Response.json({ alerts, total_clients: Object.keys(clientMap).length });
+    // Auto-send outreach emails to at-risk clients
+    const outreachSent = [];
+    for (const alert of alerts) {
+      if (alert.risk_level === 'critical' || alert.risk_level === 'warning') {
+        try {
+          const clients = await base44.asServiceRole.entities.Client.filter({ name: alert.client });
+          const clientEmail = clients[0]?.contact_email;
+          if (clientEmail) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: clientEmail,
+              subject: 'Checking in from Robur Resources',
+              body: `Hi ${alert.client},\n\nWe've noticed it's been a little while since your last service with us. We value your partnership and wanted to reach out to see if there's anything we can help with.\n\nPlease don't hesitate to contact us if you need any waste management or resource recovery services.\n\nBest regards,\nRobur Resources Team`,
+            });
+            outreachSent.push(alert.client);
+          }
+        } catch (e) {
+          console.error(`Failed to send outreach email to ${alert.client}:`, e.message);
+        }
+      }
+    }
+
+    return Response.json({ alerts, total_clients: Object.keys(clientMap).length, outreach_sent: outreachSent });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

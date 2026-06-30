@@ -21,8 +21,8 @@ Deno.serve(async (req) => {
         return true;
       });
 
-      let status = 'matched';
-      let notes = '';
+      let status = 'approved';
+      let notes = 'Auto-approved: matched docket within 2% tolerance';
 
       if (matchingDockets.length === 0) {
         status = 'discrepancy';
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       total_processed: results.length,
-      matched: results.filter(r => r.status === 'matched').length,
+      auto_approved: results.filter(r => r.status === 'approved').length,
       discrepancies: results.filter(r => r.status === 'discrepancy').length,
       results
     });

@@ -40,6 +40,19 @@
     "due_date": {
       "type": "string",
       "format": "date"
+    },
+    "stripe_session_id": {
+      "type": "string"
+    },
+    "stripe_payment_url": {
+      "type": "string"
+    },
+    "reminder_count": {
+      "type": "number",
+      "default": 0
+    },
+    "client_email": {
+      "type": "string"
     }
   },
   "required": [

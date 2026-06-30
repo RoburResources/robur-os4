@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import StatusDot from "@/components/ui/StatusDot";
-import { FileText, ChevronRight, RefreshCw, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { FileText, ChevronRight, RefreshCw, CheckCircle, Clock, AlertCircle, CreditCard } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { createCheckoutSession } from "@/functions/createCheckoutSession";
 
 const statusConfig = {
   draft: { type: "idle", label: "Draft" },
@@ -28,6 +29,22 @@ export default function InvoiceList() {
   const totalOutstanding = invoices
     .filter(i => i.status === 'sent' || i.status === 'overdue')
     .reduce((sum, i) => sum + (i.total || 0), 0);
+
+  const [payingId, setPayingId] = useState(null);
+
+  const handlePay = async (invoiceId) => {
+    setPayingId(invoiceId);
+    try {
+      const res = await createCheckoutSession({ invoice_id: invoiceId });
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPayingId(null);
+    }
+  };
 
   return (
     <GlassCard level={2} className="p-5">
@@ -76,6 +93,16 @@ export default function InvoiceList() {
                   </div>
                 </div>
                 <span className="text-sm font-bold text-robur-charcoal">${(inv.total || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                {(inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'draft') && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handlePay(inv.id); }}
+                    disabled={payingId === inv.id}
+                    className="flex items-center gap-1 rounded-lg bg-robur-yellow px-2.5 py-1.5 text-[10px] font-bold text-robur-charcoal hover:bg-robur-yellow/90 transition-colors disabled:opacity-50"
+                  >
+                    <CreditCard className="h-3 w-3" strokeWidth={2} />
+                    {payingId === inv.id ? '...' : 'Pay'}
+                  </button>
+                )}
                 <ChevronRight className="h-4 w-4 text-robur-light opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             );
