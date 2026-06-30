@@ -32,6 +32,7 @@ import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
 import DMTWorkflow from "@/pages/DMTWorkflow";
 import MGTWorkflow from "@/pages/MGTWorkflow";
 import DSSWorkflow from "@/pages/DSSWorkflow";
+import DailyLog from "@/pages/DailyLog";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -81,6 +82,7 @@ const AuthenticatedApp = () => {
           <Route path="/dmt" element={<DMTWorkflow />} />
           <Route path="/mgt" element={<MGTWorkflow />} />
           <Route path="/dss" element={<DSSWorkflow />} />
+          <Route path="/daily-log" element={<DailyLog />} />
         </Route>
       </Route>
 

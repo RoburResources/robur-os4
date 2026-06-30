@@ -4,7 +4,8 @@ import JobBoard from "@/components/jobs/JobBoard";
 import JobDetails from "@/components/jobs/JobDetails";
 import DispatchStepper from "@/components/jobs/DispatchStepper";
 import LiveJobTracking from "@/components/jobs/LiveJobTracking";
-import { motion } from "framer-motion";
+import BulkActionBar from "@/components/jobs/BulkActionBar";
+import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
@@ -16,6 +17,8 @@ export default function Jobs() {
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     base44.entities.Job.list()
@@ -47,8 +50,62 @@ export default function Jobs() {
     }
   };
 
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedIds((prev) =>
+      prev.length === filtered.length ? [] : filtered.map((j) => j.id)
+    );
+  };
+
+  const handleBulkAssignDriver = async (driverName) => {
+    setProcessing(true);
+    try {
+      const updates = selectedIds.map((id) => ({
+        id,
+        vehicle_id: driverName,
+      }));
+      await base44.entities.Job.bulkUpdate(updates);
+      setJobs((prev) =>
+        prev.map((j) =>
+          selectedIds.includes(j.id) ? { ...j, vehicle_id: driverName } : j
+        )
+      );
+      setSelectedIds([]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleBulkStatusChange = async (status) => {
+    setProcessing(true);
+    try {
+      const updates = selectedIds.map((id) => ({ id, status }));
+      await base44.entities.Job.bulkUpdate(updates);
+      setJobs((prev) =>
+        prev.map((j) =>
+          selectedIds.includes(j.id) ? { ...j, status } : j
+        )
+      );
+      if (selectedJob && selectedIds.includes(selectedJob.id)) {
+        setSelectedJob((prev) => ({ ...prev, status }));
+      }
+      setSelectedIds([]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto pb-24">
       <TopBar title="Job Management" subtitle="Plan, schedule and deliver with confidence" />
 
       <div className="grid grid-cols-12 gap-4" style={{ minHeight: "calc(100vh - 220px)" }}>
@@ -61,6 +118,9 @@ export default function Jobs() {
             onSearch={setSearch}
             onNewJob={() => (window.location.href = "/booking")}
             loading={loading}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
+            onToggleSelectAll={handleToggleSelectAll}
           />
         </motion.div>
 
@@ -73,6 +133,24 @@ export default function Jobs() {
           <LiveJobTracking job={selectedJob} />
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+          >
+            <BulkActionBar
+              selectedCount={selectedIds.length}
+              onAssignDriver={handleBulkAssignDriver}
+              onStatusChange={handleBulkStatusChange}
+              onClear={() => setSelectedIds([])}
+              processing={processing}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

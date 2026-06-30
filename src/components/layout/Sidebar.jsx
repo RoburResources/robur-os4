@@ -10,6 +10,7 @@ import {
   Users,
   CreditCard,
   ClipboardList,
+  FileText,
   FileCheck,
   BarChart3,
   Settings,
@@ -46,6 +47,7 @@ const navSections = [
       { label: "Fleet", icon: Truck, path: "/fleet" },
       { label: "Jobs", icon: Package, path: "/jobs" },
       { label: "Documents", icon: FileStack, path: "/documents" },
+      { label: "Daily Log", icon: FileText, path: "/daily-log" },
     ],
   },
   {

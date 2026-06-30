@@ -17,6 +17,7 @@ import GlassCard from "@/components/ui/GlassCard";
 import BookingStepper from "@/components/booking/BookingStepper";
 import LocationPanel from "@/components/booking/LocationPanel";
 import BookingMap from "@/components/booking/BookingMap";
+import TemplatePicker from "@/components/booking/TemplatePicker";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
 
@@ -50,6 +51,20 @@ export default function Booking() {
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const navigate = useNavigate();
+
+  const handleApplyTemplate = (tpl) => {
+    setService(tpl.service_type || "");
+    setAction(tpl.action_type || "");
+    setAddress(tpl.site_address || "");
+    setNotes(tpl.placement_notes || "");
+    setContactName(tpl.contact_name || "");
+    setContactPhone(tpl.contact_phone || "");
+    if (tpl.latitude && tpl.longitude) {
+      setBinPosition({ lat: tpl.latitude, lng: tpl.longitude });
+      setMapCenter({ lat: tpl.latitude, lng: tpl.longitude });
+    }
+    setStep(4);
+  };
 
   const handleSearchAddress = async () => {
     if (!address.trim()) return;
@@ -206,6 +221,7 @@ export default function Booking() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
           >
+            <TemplatePicker onApply={handleApplyTemplate} currentBooking={{ service, action, address, notes, contactName, contactPhone, binPosition }} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {services.map((s) => (
                 <GlassCard
