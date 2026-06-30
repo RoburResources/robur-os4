@@ -1,18 +1,117 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// --- JWT + token helpers ---
+
+function pemToArrayBuffer(pem) {
+  const b64 = pem
+    .replace(/-----BEGIN[^-]*-----/g, '')
+    .replace(/-----END[^-]*-----/g, '')
+    .replace(/\s/g, '');
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+function base64url(input) {
+  let str;
+  if (input instanceof Uint8Array || input instanceof ArrayBuffer) {
+    const bytes = input instanceof ArrayBuffer ? new Uint8Array(input) : input;
+    str = String.fromCharCode.apply(null, bytes);
+  } else {
+    str = input;
+  }
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function signRevolutJWT(clientId, issuer, privateKeyPem) {
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToArrayBuffer(privateKeyPem),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const payload = {
+    iss: issuer,
+    sub: clientId,
+    aud: 'https://revolut.com',
+    exp: Math.floor(Date.now() / 1000) + 300,
+  };
+
+  const headerB64 = base64url(JSON.stringify(header));
+  const payloadB64 = base64url(JSON.stringify(payload));
+  const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, data);
+
+  return `${headerB64}.${payloadB64}.${base64url(signature)}`;
+}
+
+const API_BASE = 'https://merchant.revolut.com/api/1.0';
+
+async function getRevolutAccessToken(base44) {
+  const clientId = Deno.env.get('REVOLUT_CLIENT_ID');
+  const issuer = Deno.env.get('REVOLUT_ISSUER');
+  const privateKeyPem = Deno.env.get('REVOLUT_PRIVATE_KEY');
+  if (!clientId || !issuer || !privateKeyPem) {
+    throw new Error('Revolut OAuth secrets not configured');
+  }
+
+  const tokens = await base44.asServiceRole.entities.IntegrationToken.filter({ service: 'revolut' });
+  if (tokens.length === 0) {
+    throw new Error('No Revolut token found. Complete OAuth consent via the revolutOAuthCallback function first.');
+  }
+  const tokenRecord = tokens[0];
+
+  const expiresAt = new Date(tokenRecord.expires_at).getTime();
+  if (tokenRecord.access_token && expiresAt > Date.now() + 60000) {
+    return tokenRecord.access_token;
+  }
+
+  const jwt = await signRevolutJWT(clientId, issuer, privateKeyPem);
+  const refreshRes = await fetch(`${API_BASE}/auth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: tokenRecord.refresh_token,
+      client_id: clientId,
+      client_assertion: jwt,
+      client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+    }),
+  });
+
+  if (!refreshRes.ok) {
+    const errText = await refreshRes.text();
+    throw new Error(`Revolut token refresh failed: ${errText}`);
+  }
+
+  const tokenData = await refreshRes.json();
+  await base44.asServiceRole.entities.IntegrationToken.update(tokenRecord.id, {
+    access_token: tokenData.access_token,
+    refresh_token: tokenData.refresh_token,
+    expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+  });
+
+  return tokenData.access_token;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const apiKey = Deno.env.get('REVOLUT_API_KEY');
-    if (!apiKey) return Response.json({ error: 'REVOLUT_API_KEY not set' }, { status: 500 });
+    const accessToken = await getRevolutAccessToken(base44);
 
     const results = { transactions_checked: 0, invoices_matched: 0, xero_payments_recorded: 0 };
 
     // --- Fetch Revolut transactions (last 3 days) ---
     const fromDate = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
-    const txRes = await fetch(`https://merchant.revolut.com/api/1.0/transactions?from=${fromDate}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
+    const txRes = await fetch(`${API_BASE}/transactions?from=${fromDate}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!txRes.ok) {
@@ -32,7 +131,7 @@ Deno.serve(async (req) => {
     const overdue = await base44.asServiceRole.entities.Invoice.filter({ status: 'overdue' });
     const unpaidInvoices = [...outstanding, ...overdue];
 
-    // Get Xero access token for payment recording
+    // --- Get Xero access token ---
     let xeroAccessToken = null;
     const tokens = await base44.asServiceRole.entities.IntegrationToken.filter({ service: 'xero' });
     if (tokens.length > 0) {
@@ -58,13 +157,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    let xeroBankAccountId = null;
+    // --- Dynamically discover Xero tenant ID ---
+    let xeroTenantId = null;
     if (xeroAccessToken) {
+      try {
+        const connRes = await fetch('https://api.xero.com/connections', {
+          headers: { Authorization: `Bearer ${xeroAccessToken}` },
+        });
+        if (connRes.ok) {
+          const connections = await connRes.json();
+          if (Array.isArray(connections) && connections.length > 0) {
+            xeroTenantId = connections[0].tenantId;
+          }
+        }
+      } catch (e) {
+        console.error('Xero tenant discovery failed:', e.message);
+      }
+    }
+
+    // --- Find Xero bank account ---
+    let xeroBankAccountId = null;
+    if (xeroAccessToken && xeroTenantId) {
       try {
         const accountsRes = await fetch('https://api.xero.com/api.xro/2.0/Accounts', {
           headers: {
             Authorization: `Bearer ${xeroAccessToken}`,
-            'Xero-tenant-id': Deno.env.get('XERO_TENANT_ID'),
+            'Xero-tenant-id': xeroTenantId,
           },
         });
         const accountsData = await accountsRes.json();
@@ -76,18 +194,14 @@ Deno.serve(async (req) => {
 
     for (const tx of incoming) {
       const txAmount = parseFloat(tx.amount);
-      // Match by exact amount (within 1 cent tolerance for rounding)
       const match = unpaidInvoices.find(inv => Math.abs(inv.total - txAmount) < 0.01);
       if (match) {
-        // Mark invoice as paid
         await base44.asServiceRole.entities.Invoice.update(match.id, { status: 'paid' });
         results.invoices_matched++;
 
-        // Remove from unpaid list to prevent double-matching
         const idx = unpaidInvoices.findIndex(inv => inv.id === match.id);
         if (idx > -1) unpaidInvoices.splice(idx, 1);
 
-        // Remove credit hold if applicable
         try {
           const clients = await base44.asServiceRole.entities.Client.filter({ name: match.client });
           if (clients.length > 0 && clients[0].credit_hold) {
@@ -100,14 +214,13 @@ Deno.serve(async (req) => {
           console.error('Credit hold removal failed:', e.message);
         }
 
-        // Record payment in Xero
-        if (xeroAccessToken && match.xero_invoice_id && xeroBankAccountId) {
+        if (xeroAccessToken && match.xero_invoice_id && xeroBankAccountId && xeroTenantId) {
           try {
             const paymentRes = await fetch('https://api.xero.com/api.xro/2.0/Payments', {
               method: 'PUT',
               headers: {
                 Authorization: `Bearer ${xeroAccessToken}`,
-                'Xero-tenant-id': Deno.env.get('XERO_TENANT_ID'),
+                'Xero-tenant-id': xeroTenantId,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
