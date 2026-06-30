@@ -7,6 +7,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const booking = body.data || body;
 
+    if (!booking || !booking.id) {
+      return Response.json({ skipped: true, reason: 'no booking data' });
+    }
+
     // Check if job already exists for this booking
     const existing = await base44.asServiceRole.entities.Job.filter({
       job_id: `BK-${booking.id}`,

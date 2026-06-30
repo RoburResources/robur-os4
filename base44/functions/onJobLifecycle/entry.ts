@@ -18,22 +18,10 @@ Deno.serve(async (req) => {
     const results = [];
 
     // --- Event Bus: each handler is independent; failures don't block others ---
+    // Note: Google Calendar sync is handled by its own entity automation (Sync Jobs to Google Calendar)
+    // so we don't invoke syncJobToCalendar here to avoid redundancy.
 
-    // 1. Sync to Google Calendar (on create, update, delete)
-    if (['create', 'update', 'delete'].includes(eventType)) {
-      try {
-        await base44.functions.invoke('syncJobToCalendar', {
-          event_type: eventType,
-          job: job,
-          old_data: old_data,
-        });
-        results.push({ handler: 'syncJobToCalendar', status: 'ok' });
-      } catch (e) {
-        results.push({ handler: 'syncJobToCalendar', status: 'error', error: e.message });
-      }
-    }
-
-    // 2. Notify client when job is completed
+    // 1. Notify client when job is completed
     if (eventType === 'update' && changed_fields?.includes('status') && job?.status === 'completed' && job?.contact_phone) {
       try {
         // Could integrate with SMS provider here; for now, log
