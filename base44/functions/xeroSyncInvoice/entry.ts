@@ -45,6 +45,21 @@ Deno.serve(async (req) => {
       expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
     });
 
+    // --- Fetch tenant ID dynamically ---
+    const connectionsRes = await fetch('https://api.xero.com/connections', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (!connectionsRes.ok) {
+      const errText = await connectionsRes.text();
+      console.error('Xero connections fetch failed:', errText);
+      return Response.json({ error: `Xero connections fetch failed: ${errText}` }, { status: 500 });
+    }
+    const connections = await connectionsRes.json();
+    const tenantId = connections[0]?.tenantId;
+    if (!tenantId) {
+      return Response.json({ error: 'No Xero tenant connected' }, { status: 500 });
+    }
+
     // --- Build line items ---
     let lineItems = [];
     try {
@@ -69,7 +84,7 @@ Deno.serve(async (req) => {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
-        'Xero-tenant-id': Deno.env.get('XERO_TENANT_ID'),
+        'Xero-tenant-id': tenantId,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
