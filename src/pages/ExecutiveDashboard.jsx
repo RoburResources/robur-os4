@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { getExecutiveData } from "@/functions/getExecutiveData";
 import { base44 } from "@/api/base44Client";
 import SmartLookbackPanel from "@/components/ui/SmartLookbackPanel";
+import ClientChurnPanel from "@/components/staff/ClientChurnPanel";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -201,6 +202,10 @@ export default function ExecutiveDashboard() {
 
         <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.35 }}>
           <SmartLookbackPanel />
+        </motion.div>
+
+        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.45 }}>
+          <ClientChurnPanel />
         </motion.div>
 
         <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.4 }}>

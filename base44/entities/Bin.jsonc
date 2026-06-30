@@ -1,0 +1,62 @@
+{
+  "name": "Bin",
+  "type": "object",
+  "properties": {
+    "bin_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "size": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "placed",
+        "in_transit",
+        "at_depot",
+        "maintenance",
+        "retired"
+      ],
+      "default": "placed"
+    },
+    "client": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "placement_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_serviced": {
+      "type": "string",
+      "format": "date"
+    },
+    "utilization_pct": {
+      "type": "number"
+    },
+    "condition_pct": {
+      "type": "number"
+    },
+    "days_on_site": {
+      "type": "number"
+    },
+    "repair_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "bin_id",
+    "type"
+  ]
+}

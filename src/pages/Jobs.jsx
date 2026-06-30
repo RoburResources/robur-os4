@@ -6,6 +6,7 @@ import DispatchStepper from "@/components/jobs/DispatchStepper";
 import LiveJobTracking from "@/components/jobs/LiveJobTracking";
 import BulkActionBar from "@/components/jobs/BulkActionBar";
 import JobTimeline from "@/components/jobs/JobTimeline";
+import RouteOptimizer from "@/components/jobs/RouteOptimizer";
 import { setActionContext } from "@/components/ui/QuickActionMenu";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
@@ -179,8 +180,9 @@ export default function Jobs() {
           <DispatchStepper job={selectedJob} onAdvance={handleAdvance} />
         </motion.div>
 
-        <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.1 }}>
+        <motion.div className="col-span-12 lg:col-span-4 space-y-4" {...fadeIn} transition={{ delay: 0.1 }}>
           <LiveJobTracking job={selectedJob} />
+          <RouteOptimizer jobs={filtered} />
         </motion.div>
       </div>
 

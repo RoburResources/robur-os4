@@ -1,56 +1,87 @@
+import { useState, useEffect } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import StatusDot from "@/components/ui/StatusDot";
-import { FileText, ChevronRight } from "lucide-react";
+import { FileText, ChevronRight, RefreshCw, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
-const invoices = [
-  { id: "INV-1284", client: "Metro Recycling", amount: "$12,450", status: "active", due: "Due in 5 days", type: "Paid" },
-  { id: "INV-1283", client: "Hansen Yuncken", amount: "$8,900", status: "warning", due: "Overdue 3 days", type: "Overdue" },
-  { id: "INV-1282", client: "Cleanaway", amount: "$15,200", status: "idle", due: "Due in 14 days", type: "Pending" },
-  { id: "INV-1281", client: "Visy Recycling", amount: "$6,780", status: "active", due: "Paid Jun 15", type: "Paid" },
-  { id: "INV-1280", client: "Boral Resources", amount: "$22,100", status: "active", due: "Paid Jun 12", type: "Paid" },
-];
-
-const typeColors = {
-  Paid: "bg-emerald-50 text-emerald-600",
-  Overdue: "bg-red-50 text-red-500",
-  Pending: "bg-robur-charcoal/5 text-robur-steel",
+const statusConfig = {
+  draft: { type: "idle", label: "Draft" },
+  sent: { type: "active", label: "Sent" },
+  paid: { type: "active", label: "Paid" },
+  overdue: { type: "warning", label: "Overdue" },
 };
 
 export default function InvoiceList() {
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    base44.entities.Invoice.list('-created_date', 20)
+      .then(setInvoices)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const totalOutstanding = invoices
+    .filter(i => i.status === 'sent' || i.status === 'overdue')
+    .reduce((sum, i) => sum + (i.total || 0), 0);
+
   return (
     <GlassCard level={2} className="p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel">Recent Invoices</h3>
-        <button className="text-xs font-medium text-robur-yellow hover:underline">View All</button>
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel">Auto-Generated Invoices</h3>
+          <p className="text-sm font-bold text-robur-charcoal mt-0.5">
+            ${totalOutstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-xs font-medium text-robur-steel">outstanding</span>
+          </p>
+        </div>
+        <button onClick={load} className="flex items-center gap-1.5 rounded-lg bg-robur-charcoal/5 px-2.5 py-1.5 text-xs font-medium text-robur-steel hover:bg-robur-charcoal/10 transition-colors">
+          <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} strokeWidth={2} />
+          Refresh
+        </button>
       </div>
 
-      <div className="space-y-1.5">
-        {invoices.map((inv) => (
-          <div
-            key={inv.id}
-            className="group flex items-center gap-3 rounded-xl p-2.5 hover:bg-robur-charcoal/[0.03] transition-colors cursor-pointer"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-robur-charcoal/5">
-              <FileText className="h-4 w-4 text-robur-steel" strokeWidth={1.5} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-robur-charcoal">{inv.client}</span>
-                <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${typeColors[inv.type]}`}>
-                  {inv.type}
-                </span>
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-14 rounded-xl bg-robur-charcoal/[0.03] animate-pulse" />
+          ))}
+        </div>
+      ) : invoices.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-8 text-center">
+          <FileText className="h-8 w-8 text-robur-steel/30" strokeWidth={1.5} />
+          <p className="text-xs text-robur-steel/60">No invoices yet — they auto-generate when dockets are validated.</p>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {invoices.map((inv) => {
+            const cfg = statusConfig[inv.status] || statusConfig.draft;
+            return (
+              <div key={inv.id} className="group flex items-center gap-3 rounded-xl p-2.5 hover:bg-robur-charcoal/[0.03] transition-colors cursor-pointer">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-robur-charcoal/5">
+                  <FileText className="h-4 w-4 text-robur-steel" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-robur-charcoal">{inv.client}</span>
+                    <StatusDot type={cfg.type} label={cfg.label} />
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-robur-steel/50">{inv.invoice_no}</span>
+                    <span className="text-[10px] text-robur-steel/30">·</span>
+                    <span className="text-[10px] text-robur-steel/50">{inv.docket_nos ? `${inv.docket_nos.split(',').length} docket(s)` : '—'}</span>
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-robur-charcoal">${(inv.total || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                <ChevronRight className="h-4 w-4 text-robur-light opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] text-robur-steel/50">{inv.id}</span>
-                <span className="text-[10px] text-robur-steel/30">·</span>
-                <span className="text-[10px] text-robur-steel/50">{inv.due}</span>
-              </div>
-            </div>
-            <span className="text-sm font-bold text-robur-charcoal">{inv.amount}</span>
-            <ChevronRight className="h-4 w-4 text-robur-light opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </GlassCard>
   );
 }

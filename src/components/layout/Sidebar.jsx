@@ -17,6 +17,11 @@ import {
   Bell,
   LogOut,
   Trash2,
+  Percent,
+  Shield,
+  Award,
+  Box,
+  Receipt,
 } from "lucide-react";
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
@@ -46,6 +51,7 @@ const navSections = [
     items: [
       { label: "Fleet", icon: Truck, path: "/fleet" },
       { label: "Jobs", icon: Package, path: "/jobs" },
+      { label: "Bins", icon: Box, path: "/bins" },
       { label: "Documents", icon: FileStack, path: "/documents" },
       { label: "Daily Log", icon: FileText, path: "/daily-log" },
     ],
@@ -55,6 +61,15 @@ const navSections = [
     items: [
       { label: "Clients", icon: Users, path: "/clients" },
       { label: "Payments", icon: CreditCard, path: "/finance" },
+      { label: "Margins", icon: Percent, path: "/margins" },
+      { label: "Reconciliation", icon: Receipt, path: "/reconciliation" },
+    ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { label: "Drivers", icon: Award, path: "/drivers" },
+      { label: "Compliance", icon: Shield, path: "/compliance" },
     ],
   },
   {

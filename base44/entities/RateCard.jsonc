@@ -1,0 +1,36 @@
+{
+  "name": "RateCard",
+  "type": "object",
+  "properties": {
+    "material": {
+      "type": "string"
+    },
+    "base_rate_per_tonne": {
+      "type": "number"
+    },
+    "rush_multiplier": {
+      "type": "number",
+      "default": 1.5
+    },
+    "after_hours_multiplier": {
+      "type": "number",
+      "default": 1.25
+    },
+    "difficult_access_multiplier": {
+      "type": "number",
+      "default": 1.15
+    },
+    "same_day_multiplier": {
+      "type": "number",
+      "default": 1.3
+    },
+    "minimum_charge": {
+      "type": "number",
+      "default": 150
+    }
+  },
+  "required": [
+    "material",
+    "base_rate_per_tonne"
+  ]
+}

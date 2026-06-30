@@ -36,6 +36,11 @@ const DMTWorkflow = lazy(() => import("@/pages/DMTWorkflow"));
 const MGTWorkflow = lazy(() => import("@/pages/MGTWorkflow"));
 const DSSWorkflow = lazy(() => import("@/pages/DSSWorkflow"));
 const DailyLog = lazy(() => import("@/pages/DailyLog"));
+const MaterialMargin = lazy(() => import("@/pages/MaterialMargin"));
+const DriverScorecard = lazy(() => import("@/pages/DriverScorecard"));
+const Compliance = lazy(() => import("@/pages/Compliance"));
+const BinTracking = lazy(() => import("@/pages/BinTracking"));
+const SupplierReconciliation = lazy(() => import("@/pages/SupplierReconciliation"));
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -87,6 +92,11 @@ const AuthenticatedApp = () => {
           <Route path="/mgt" element={<MGTWorkflow />} />
           <Route path="/dss" element={<DSSWorkflow />} />
           <Route path="/daily-log" element={<DailyLog />} />
+          <Route path="/margins" element={<MaterialMargin />} />
+          <Route path="/drivers" element={<DriverScorecard />} />
+          <Route path="/compliance" element={<Compliance />} />
+          <Route path="/bins" element={<BinTracking />} />
+          <Route path="/reconciliation" element={<SupplierReconciliation />} />
         </Route>
       </Route>
 

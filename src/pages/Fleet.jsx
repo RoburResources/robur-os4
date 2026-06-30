@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import WorkflowFlow from "@/components/ui/WorkflowFlow";
 import MaintenanceForecast from "@/components/fleet/MaintenanceForecast";
+import FuelAnomalyPanel from "@/components/fleet/FuelAnomalyPanel";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -52,6 +53,10 @@ export default function Fleet() {
 
         <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.1 }}>
           <AssetDetails vehicle={selectedVehicle} />
+        </motion.div>
+
+        <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.15 }}>
+          <FuelAnomalyPanel />
         </motion.div>
       </div>
     </div>

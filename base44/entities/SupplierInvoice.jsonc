@@ -1,0 +1,52 @@
+{
+  "name": "SupplierInvoice",
+  "type": "object",
+  "properties": {
+    "invoice_no": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "charge_type": {
+      "type": "string"
+    },
+    "material": {
+      "type": "string"
+    },
+    "weight_charged": {
+      "type": "number"
+    },
+    "rate": {
+      "type": "number"
+    },
+    "total": {
+      "type": "number"
+    },
+    "matched_docket_nos": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "matched",
+        "discrepancy",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "discrepancy_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "invoice_no",
+    "supplier"
+  ]
+}

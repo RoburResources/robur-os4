@@ -1,0 +1,49 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "invoice_no": {
+      "type": "string"
+    },
+    "client": {
+      "type": "string"
+    },
+    "docket_nos": {
+      "type": "string"
+    },
+    "line_items_json": {
+      "type": "string"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "gst": {
+      "type": "number"
+    },
+    "total": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "paid",
+        "overdue"
+      ],
+      "default": "draft"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "invoice_no",
+    "client"
+  ]
+}
