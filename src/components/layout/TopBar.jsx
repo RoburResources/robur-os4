@@ -1,6 +1,7 @@
 import { Search, Bell, ChevronDown } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import OutdoorModeToggle from "@/components/ui/OutdoorModeToggle";
+import DriverModeToggle from "@/components/ui/DriverModeToggle";
 
 export default function TopBar({ title, subtitle }) {
   return (
@@ -27,7 +28,8 @@ export default function TopBar({ title, subtitle }) {
           </span>
         </GlassCard>
 
-        {/* Outdoor mode toggle */}
+        {/* Driver + Outdoor mode toggles */}
+        <DriverModeToggle />
         <OutdoorModeToggle />
 
         {/* Avatar */}

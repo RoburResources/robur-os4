@@ -1,6 +1,6 @@
 import { Search, Plus, Check } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
-import StatusDot from "@/components/ui/StatusDot";
+import SemanticStatus from "@/components/ui/SemanticStatus";
 import { cn } from "@/lib/utils";
 
 const statusLabels = {
@@ -95,7 +95,7 @@ export default function JobBoard({ jobs, selectedJob, onSelect, search, onSearch
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-bold text-robur-charcoal">{job.job_id}</span>
-                      <StatusDot status={statusVariants[job.status] || "idle"} size="xs" label={statusLabels[job.status]} />
+                      <SemanticStatus status={job.status} size="xs" label={true} />
                     </div>
                     <p className="text-[11px] font-semibold text-robur-charcoal truncate">{job.title}</p>
                     <div className="flex items-center gap-2 mt-1">

@@ -6,6 +6,8 @@ import MobileHeader from "./MobileHeader";
 import PageTransition from "@/components/ui/PageTransition";
 import QuickActionMenu from "@/components/ui/QuickActionMenu";
 import OutdoorModeToggle from "@/components/ui/OutdoorModeToggle";
+import DriverModeToggle from "@/components/ui/DriverModeToggle";
+import SpatialMapOverlay from "@/components/ui/SpatialMapOverlay";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RefreshCw } from "lucide-react";
@@ -46,8 +48,9 @@ export default function AppLayout() {
       {isMobile ? (
         <>
           <MobileHeader />
-          {/* Outdoor mode toggle — top right on mobile */}
-          <div className="fixed top-3 right-4 z-[55]">
+          {/* Outdoor + Driver mode toggles — top right on mobile */}
+          <div className="fixed top-3 right-4 z-[55] flex items-center gap-2">
+            <DriverModeToggle />
             <OutdoorModeToggle />
           </div>
           <main
@@ -65,6 +68,7 @@ export default function AppLayout() {
           </main>
           <BottomTabs />
           <QuickActionMenu />
+          <SpatialMapOverlay />
         </>
       ) : (
         <>
@@ -74,6 +78,7 @@ export default function AppLayout() {
               <Outlet />
             </PageTransition>
           </main>
+          <SpatialMapOverlay />
         </>
       )}
     </div>

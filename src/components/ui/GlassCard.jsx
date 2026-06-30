@@ -1,6 +1,17 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
+/**
+ * GlassCard — Modular glassmorphism with functional depth layers.
+ *
+ * Level 1 (background)  — ambient cards, section backgrounds
+ * Level 2 (container)   — main content panels, lists
+ * Level 3 (overlay)     — floating cards, dropdowns, tooltips
+ * Level 4 (modal/action)— dialogs, action sheets, modals
+ *
+ * Depth = importance: higher level = closer to user = more opaque + more blur.
+ */
+
 const levels = {
   1: "glass-1",
   2: "glass-2",

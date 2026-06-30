@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TopBar from "@/components/layout/TopBar";
 import GlassCard from "@/components/ui/GlassCard";
-import StatusDot from "@/components/ui/StatusDot";
+import SemanticStatus from "@/components/ui/SemanticStatus";
 import SatelliteMap from "@/components/maps/SatelliteMap";
 import { Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
@@ -158,7 +158,7 @@ export default function MapView() {
                       <span className="text-sm font-semibold text-robur-charcoal">
                         {v.id}
                       </span>
-                      <StatusDot status={v.status} size="xs" />
+                      <SemanticStatus status={v.status} size="xs" />
                     </div>
                     <p className="text-[10px] text-robur-steel">
                       {v.driver} · {v.location}

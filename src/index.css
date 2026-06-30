@@ -96,7 +96,12 @@
   }
 }
 
-/* Glassmorphism Levels */
+/* Glassmorphism Levels — z-index depth = importance
+   Level 1 = background layer (z-10)
+   Level 2 = main container (z-20)
+   Level 3 = card overlay (z-30)
+   Level 4 = modal/action (z-40)
+*/
 .glass-1 {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(20px) saturate(180%);
@@ -106,6 +111,47 @@
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.03),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 10;
+}
+
+.glass-2 {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  position: relative;
+  z-index: 20;
+}
+
+.glass-3 {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  position: relative;
+  z-index: 30;
+}
+
+.glass-4 {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 24px 60px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 40;
 }
 
 .glass-2 {
@@ -192,17 +238,58 @@
 .outdoor .glass-2,
 .outdoor .glass-3,
 .outdoor .glass-4 {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  border: 2px solid rgba(0, 0, 0, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 3px solid rgba(0, 0, 0, 1);
+  box-shadow: none;
+}
+
+.outdoor .glow-yellow {
+  box-shadow: none;
+}
+
+.outdoor .status-active,
+.outdoor .status-warning,
+.outdoor .status-critical {
+  box-shadow: none;
 }
 
 .outdoor .glass-sidebar {
   background: rgba(0, 0, 0, 0.97);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* Driver Mode — high-density tap targets, larger text, simplified layout */
+.driver-mode {
+  --radius: 0.875rem;
+}
+
+.driver-mode body {
+  font-size: 17px;
+}
+
+.driver-mode .text-xs { font-size: 14px; }
+.driver-mode .text-sm { font-size: 16px; }
+.driver-mode .text-\[10px\] { font-size: 12px; }
+.driver-mode .text-\[9px\] { font-size: 11px; }
+.driver-mode .text-\[8px\] { font-size: 10px; }
+
+.driver-mode button {
+  min-height: 44px;
+}
+
+.driver-mode .glass-1,
+.driver-mode .glass-2,
+.driver-mode .glass-3,
+.driver-mode .glass-4 {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+}
+
+.driver-mode .glass-sidebar {
+  background: rgba(34, 38, 43, 0.98);
 }
 
 /* Smooth scrollbar */

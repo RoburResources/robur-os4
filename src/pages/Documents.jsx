@@ -1,7 +1,8 @@
 import { useState } from "react";
 import TopBar from "@/components/layout/TopBar";
 import GlassCard from "@/components/ui/GlassCard";
-import { motion } from "framer-motion";
+import CameraDocketCapture from "@/components/ui/CameraDocketCapture";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   Table,
@@ -15,6 +16,7 @@ import {
   History,
   Archive,
   Sparkles,
+  Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,10 +53,46 @@ const deliveryChannels = [
 export default function Documents() {
   const [generated, setGenerated] = useState([true, true, true]);
   const [packSent, setPackSent] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   return (
     <div className="max-w-7xl mx-auto">
       <TopBar title="Document Workflow" subtitle="Source → Extract → Generate → Pack → Archive" />
+
+      {/* Camera-first docket capture */}
+      <AnimatePresence>
+        {showCamera && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel">Capture Docket</h3>
+              <button
+                onClick={() => setShowCamera(false)}
+                className="text-[10px] font-medium text-robur-steel hover:text-robur-charcoal"
+              >
+                Close
+              </button>
+            </div>
+            <CameraDocketCapture onCaptured={() => setShowCamera(false)} onClose={() => setShowCamera(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Quick capture button */}
+      {!showCamera && (
+        <motion.button
+          {...fadeIn}
+          onClick={() => setShowCamera(true)}
+          className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-robur-yellow py-3 text-sm font-bold text-robur-charcoal hover:bg-robur-yellow/90 transition-colors"
+        >
+          <Camera className="h-4 w-4" strokeWidth={2} />
+          Capture Docket with Camera
+        </motion.button>
+      )}
 
       {/* Flow steps */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 mb-6">

@@ -3,6 +3,8 @@ import TopBar from "@/components/layout/TopBar";
 import MetricCard from "@/components/ui/MetricCard";
 import GlassCard from "@/components/ui/GlassCard";
 import RevenueChart from "@/components/finance/RevenueChart";
+import WhatNextPanel from "@/components/ui/WhatNextPanel";
+import AlertCard from "@/components/ui/AlertCard";
 import { motion } from "framer-motion";
 import { DollarSign, Truck, Package, CheckCircle, ArrowRight, TrendingUp, AlertTriangle, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -65,31 +67,43 @@ export default function ExecutiveDashboard() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-12 gap-5">
-        <motion.div className="col-span-12 lg:col-span-8" {...fadeIn} transition={{ delay: 0.2 }}>
+      {/* What's Next — predictive 30-minute lookahead */}
+      <div className="grid grid-cols-12 gap-5 mb-5">
+        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.15 }}>
+          <WhatNextPanel />
+        </motion.div>
+        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.2 }}>
           <RevenueChart />
         </motion.div>
+      </div>
 
-        <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.25 }}>
+      <div className="grid grid-cols-12 gap-5">
+        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.25 }}>
           <GlassCard level={2} className="p-5 h-full">
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="h-4 w-4 text-robur-yellow" />
               <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel">Priority Alerts</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {alerts.length === 0 ? (
                 <p className="text-xs text-robur-steel/60">No active alerts</p>
               ) : (
                 alerts.map((a, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0",
-                      a.severity === "critical" ? "bg-red-400" : a.severity === "warning" ? "bg-robur-yellow" : "bg-blue-400"
-                    )} />
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-robur-charcoal">{a.message}</p>
-                      <p className="text-[10px] text-robur-steel">{a.time}</p>
-                    </div>
-                  </div>
+                  <AlertCard
+                    key={i}
+                    alert={{
+                      ...a,
+                      detail: a.time,
+                      remediation: a.severity === "critical" ? {
+                        type: "maintenance",
+                        text: "Maintenance job auto-created",
+                        link: "/jobs",
+                      } : a.severity === "warning" ? {
+                        type: "fuel",
+                        text: "Alert sent to operations channel",
+                      } : null,
+                    }}
+                  />
                 ))
               )}
             </div>
