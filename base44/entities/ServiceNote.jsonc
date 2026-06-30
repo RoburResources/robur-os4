@@ -1,0 +1,40 @@
+{
+  "name": "ServiceNote",
+  "type": "object",
+  "properties": {
+    "driver_name": {
+      "type": "string"
+    },
+    "vehicle_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "note_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "issue",
+        "completion",
+        "incident"
+      ],
+      "default": "general"
+    },
+    "content": {
+      "type": "string"
+    },
+    "shift_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "docket_no": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "driver_name",
+    "content",
+    "shift_date"
+  ]
+}
