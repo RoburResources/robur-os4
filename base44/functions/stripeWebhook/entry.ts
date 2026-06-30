@@ -27,13 +27,14 @@ Deno.serve(async (req) => {
       const invoiceNo = session.metadata?.invoice_no;
 
       if (invoiceNo) {
-        const invoices = await base44.asServiceRole.entities.Invoice.filter({ invoice_no: invoiceNo });
+        const invoices = await base44.asServiceRole.entities.Invoice.filter({ invoice_no: invoiceNo, status: { '$ne': 'paid' } });
         if (invoices.length > 0) {
           const inv = invoices[0];
           await base44.asServiceRole.entities.Invoice.update(inv.id, {
             status: 'paid',
             stripe_session_id: session.id,
           });
+          console.log(`Payment processed for invoice ${invoiceNo}, session ${session.id}`);
 
           // Remove credit hold if client has one
           try {
@@ -54,51 +55,56 @@ Deno.serve(async (req) => {
               const tokens = await base44.asServiceRole.entities.IntegrationToken.filter({ service: 'xero' });
               if (tokens.length > 0) {
                 const tokenRecord = tokens[0];
+                const xeroTenantId = Deno.env.get('XERO_TENANT_ID');
+                if (!xeroTenantId) {
+                  throw new Error('XERO_TENANT_ID environment variable not set');
+                }
+
                 const refreshRes = await fetch('https://identity.xero.com/connect/token', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                  body: new URLSearchParams({
-                    grant_type: 'refresh_token',
-                    refresh_token: tokenRecord.refresh_token,
-                    client_id: Deno.env.get('XERO_CLIENT_ID'),
-                    client_secret: Deno.env.get('XERO_CLIENT_SECRET'),
-                  }),
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                  grant_type: 'refresh_token',
+                  refresh_token: tokenRecord.refresh_token,
+                  client_id: Deno.env.get('XERO_CLIENT_ID'),
+                  client_secret: Deno.env.get('XERO_CLIENT_SECRET'),
+                }),
                 });
                 if (refreshRes.ok) {
-                  const tokenData = await refreshRes.json();
-                  await base44.asServiceRole.entities.IntegrationToken.update(tokenRecord.id, {
-                    refresh_token: tokenData.refresh_token,
-                    access_token: tokenData.access_token,
-                    expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
-                  });
-                  // Find bank account in Xero
-                  const accountsRes = await fetch('https://api.xero.com/api.xro/2.0/Accounts', {
+                const tokenData = await refreshRes.json();
+                await base44.asServiceRole.entities.IntegrationToken.update(tokenRecord.id, {
+                  refresh_token: tokenData.refresh_token,
+                  access_token: tokenData.access_token,
+                  expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+                });
+                // Find bank account in Xero
+                const accountsRes = await fetch('https://api.xero.com/api.xro/2.0/Accounts', {
+                  headers: {
+                    Authorization: `Bearer ${tokenData.access_token}`,
+                    'Xero-tenant-id': xeroTenantId,
+                  },
+                });
+                const accountsData = await accountsRes.json();
+                const bankAccount = accountsData.Accounts?.find(a => a.Type === 'BANK');
+                if (bankAccount) {
+                  await fetch('https://api.xero.com/api.xro/2.0/Payments', {
+                    method: 'PUT',
                     headers: {
                       Authorization: `Bearer ${tokenData.access_token}`,
-                      'Xero-tenant-id': Deno.env.get('XERO_TENANT_ID'),
+                      'Xero-tenant-id': xeroTenantId,
+                      'Content-Type': 'application/json',
                     },
+                    body: JSON.stringify({
+                      Payments: [{
+                        Invoice: { InvoiceID: inv.xero_invoice_id },
+                        Account: { AccountID: bankAccount.AccountID },
+                        Amount: inv.total,
+                        Date: new Date().toISOString().split('T')[0],
+                        Reference: `Stripe: ${session.id}`,
+                      }],
+                    }),
                   });
-                  const accountsData = await accountsRes.json();
-                  const bankAccount = accountsData.Accounts?.find(a => a.Type === 'BANK');
-                  if (bankAccount) {
-                    await fetch('https://api.xero.com/api.xro/2.0/Payments', {
-                      method: 'PUT',
-                      headers: {
-                        Authorization: `Bearer ${tokenData.access_token}`,
-                        'Xero-tenant-id': Deno.env.get('XERO_TENANT_ID'),
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        Payments: [{
-                          Invoice: { InvoiceID: inv.xero_invoice_id },
-                          Account: { AccountID: bankAccount.AccountID },
-                          Amount: inv.total,
-                          Date: new Date().toISOString().split('T')[0],
-                          Reference: `Stripe: ${session.id}`,
-                        }],
-                      }),
-                    });
-                  }
+                }
                 }
               }
             } catch (e) {

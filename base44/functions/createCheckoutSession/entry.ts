@@ -4,6 +4,8 @@ import Stripe from 'npm:stripe@14.21.0';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { invoice_id } = await req.json();
     if (!invoice_id) return Response.json({ error: 'invoice_id required' }, { status: 400 });
@@ -13,7 +15,9 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
-    const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || 'https://app.base44.com';
+    const origin = req.headers.get('origin');
+    if (!origin) return Response.json({ error: 'Origin header required' }, { status: 400 });
+    const baseUrl = origin.replace(/\/$/, '');
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -30,11 +34,13 @@ Deno.serve(async (req) => {
       }],
       metadata: {
         invoice_no: invoice.invoice_no,
+        invoice_id: invoice.id,
         base44_app_id: Deno.env.get('BASE44_APP_ID'),
       },
-      success_url: `${origin}/finance?payment=success&invoice=${invoice.invoice_no}`,
-      cancel_url: `${origin}/finance?payment=cancelled&invoice=${invoice.invoice_no}`,
+      success_url: `${baseUrl}/finance?payment=success&invoice=${invoice.invoice_no}`,
+      cancel_url: `${baseUrl}/finance?payment=cancelled&invoice=${invoice.invoice_no}`,
     });
+    console.log(`Checkout session created for invoice ${invoice.invoice_no}, user ${user.id}`);
 
     await base44.asServiceRole.entities.Invoice.update(invoice_id, {
       stripe_session_id: session.id,
