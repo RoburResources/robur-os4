@@ -1,13 +1,13 @@
 import GlassCard from "@/components/ui/GlassCard";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const data = [
-  { month: "Jan", revenue: 285000, margin: 82000 },
-  { month: "Feb", revenue: 310000, margin: 91000 },
-  { month: "Mar", revenue: 298000, margin: 85000 },
-  { month: "Apr", revenue: 340000, margin: 102000 },
-  { month: "May", revenue: 365000, margin: 112000 },
-  { month: "Jun", revenue: 392000, margin: 125000 },
+const defaultData = [
+  { month: "—", revenue: 0, margin: 0 },
+  { month: "—", revenue: 0, margin: 0 },
+  { month: "—", revenue: 0, margin: 0 },
+  { month: "—", revenue: 0, margin: 0 },
+  { month: "—", revenue: 0, margin: 0 },
+  { month: "—", revenue: 0, margin: 0 },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -24,13 +24,15 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function RevenueChart() {
+export default function RevenueChart({ data, ytdRevenue }) {
+  const chartData = data?.length ? data : defaultData;
+  const ytd = ytdRevenue || 0;
   return (
     <GlassCard level={2} className="p-5">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel">Revenue & Margin</h3>
-          <p className="text-2xl font-bold text-robur-charcoal mt-1">$1.99M <span className="text-sm font-medium text-robur-steel">YTD</span></p>
+          <p className="text-2xl font-bold text-robur-charcoal mt-1">${(ytd / 1000).toFixed(0)}K <span className="text-sm font-medium text-robur-steel">YTD</span></p>
         </div>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5 text-[10px] font-medium text-robur-steel">
@@ -42,7 +44,7 @@ export default function RevenueChart() {
         </div>
       </div>
       <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#FFC400" stopOpacity={0.2} />

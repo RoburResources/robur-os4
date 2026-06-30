@@ -12,10 +12,11 @@ Deno.serve(async (req) => {
     }
 
     // Fetch all data in parallel
-    const [jobs, vehicles, dockets] = await Promise.all([
+    const [jobs, vehicles, dockets, invoices] = await Promise.all([
       base44.entities.Job.list().catch(() => []),
       base44.entities.Vehicle.list().catch(() => []),
       base44.entities.Docket.list('-created_date', 20).catch(() => []),
+      base44.entities.Invoice.list().catch(() => []),
     ]);
 
     // Compute metrics
@@ -70,6 +71,53 @@ Deno.serve(async (req) => {
         time: getRelativeTime(new Date(j.updated_date || j.created_date)),
       }));
 
+    // Compute revenue metrics from invoices
+    const now = new Date();
+    const paidInvoices = invoices.filter((i) => i.status === 'paid');
+    const monthlyRevenue = paidInvoices
+      .filter((i) => {
+        const d = new Date(i.issue_date || i.updated_date || i.created_date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, i) => sum + (i.total || 0), 0);
+
+    const ytdRevenue = paidInvoices
+      .filter((i) => {
+        const d = new Date(i.issue_date || i.updated_date || i.created_date);
+        return d.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, i) => sum + (i.total || 0), 0);
+
+    // Build monthly revenue series for chart (last 6 months)
+    const monthlySeries = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthInvoices = paidInvoices.filter((inv) => {
+        const invDate = new Date(inv.issue_date || inv.updated_date || inv.created_date);
+        return invDate.getMonth() === d.getMonth() && invDate.getFullYear() === d.getFullYear();
+      });
+      const revenue = monthInvoices.reduce((sum, inv) => sum + (inv.subtotal || inv.total || 0), 0);
+      const margin = monthInvoices.reduce((sum, inv) => sum + ((inv.subtotal || inv.total || 0) * 0.28), 0);
+      monthlySeries.push({
+        month: d.toLocaleString('en', { month: 'short' }),
+        revenue: Math.round(revenue),
+        margin: Math.round(margin),
+      });
+    }
+
+    // Previous month revenue for change calculation
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthRevenue = paidInvoices
+      .filter((i) => {
+        const d = new Date(i.issue_date || i.updated_date || i.created_date);
+        return d.getMonth() === prevMonth.getMonth() && d.getFullYear() === prevMonth.getFullYear();
+      })
+      .reduce((sum, i) => sum + (i.total || 0), 0);
+
+    const revenueChange = prevMonthRevenue > 0
+      ? Math.round(((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
+      : 0;
+
     return Response.json({
       metrics: {
         activeJobs: activeJobs.length,
@@ -79,6 +127,10 @@ Deno.serve(async (req) => {
         totalVehicles: vehicles.length,
         activeVehicles: activeVehicles.length,
         vehiclesNeedingAttention: vehiclesNeedingAttention.length,
+        monthlyRevenue,
+        ytdRevenue,
+        revenueChange,
+        monthlySeries,
       },
       alerts,
       activity,

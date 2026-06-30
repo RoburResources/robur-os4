@@ -107,7 +107,7 @@ export default function ExecutiveDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {(roleView === "admin" || roleView === "finance") && (
           <motion.div {...fadeIn} transition={{ delay: 0 }}>
-            <MetricCard label="Monthly Revenue" value="$392K" change="↑ 7.4% vs May" changeType="up" icon={DollarSign} />
+            <MetricCard label="Monthly Revenue" value={loading ? "—" : `$${Math.round((metrics?.monthlyRevenue ?? 0) / 1000)}K`} change={metrics?.revenueChange != null ? `${metrics.revenueChange >= 0 ? "↑" : "↓"} ${Math.abs(metrics.revenueChange)}% vs last month` : null} changeType={metrics?.revenueChange >= 0 ? "up" : "down"} icon={DollarSign} />
           </motion.div>
         )}
         {(roleView === "admin" || roleView === "fleet") && (
@@ -133,7 +133,7 @@ export default function ExecutiveDashboard() {
           <WhatNextPanel />
         </motion.div>
         <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.2 }}>
-          <RevenueChart />
+          <RevenueChart data={metrics?.monthlySeries} ytdRevenue={metrics?.ytdRevenue} />
         </motion.div>
       </div>
 
