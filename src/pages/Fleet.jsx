@@ -21,7 +21,7 @@ export default function Fleet() {
     base44.entities.Vehicle.list()
       .then((data) => {
         setVehicles(data);
-        if (data.length > 0) setSelectedVehicle(data.find((v) => v.vehicle_id === "Truck 03") || data[0]);
+        if (data.length > 0) setSelectedVehicle(data[0]);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
