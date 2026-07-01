@@ -1,6 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
+import { useEffect } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
 import { Gauge, Package, Truck, FileStack, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTabStack } from "./TabStack";
 
 const tabs = [
   { label: "Executive", icon: Gauge, path: "/" },
@@ -12,6 +14,30 @@ const tabs = [
 
 export default function BottomTabs() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { activeTab, setActiveTab, resetTab, getCurrentTabPath } = useTabStack();
+
+  // Detect which tab root the current path belongs to
+  const currentTabPath = tabs.find(t => 
+    location.pathname === t.path || 
+    location.pathname.startsWith(t.path + '/') ||
+    (t.path === "/" && location.pathname === "/")
+  )?.path || "/";
+
+  useEffect(() => {
+    setActiveTab(currentTabPath);
+  }, [currentTabPath, setActiveTab]);
+
+  const handleTabChange = (tabPath) => {
+    if (activeTab === tabPath) {
+      // Re-tap: reset to root
+      resetTab(tabPath);
+      navigate(tabPath);
+    } else {
+      // Switch to different tab
+      navigate(tabPath);
+    }
+  };
 
   return (
     <nav
@@ -19,14 +45,14 @@ export default function BottomTabs() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {tabs.map((tab) => {
-        const isActive =
-          location.pathname === tab.path ||
-          (tab.path === "/" && location.pathname.startsWith("/dashboard"));
+        const isActive = activeTab === tab.path;
         return (
-          <Link
+          <button
             key={tab.path}
-            to={tab.path}
-            className="flex flex-1 flex-col items-center gap-1 py-2.5"
+            onClick={() => handleTabChange(tab.path)}
+            className="flex flex-1 flex-col items-center gap-1 py-3 min-h-[60px] transition-colors active:opacity-70"
+            aria-label={tab.label}
+            aria-current={isActive ? "page" : undefined}
           >
             <tab.icon
               className={cn(
@@ -36,6 +62,7 @@ export default function BottomTabs() {
                   : "text-robur-steel"
               )}
               strokeWidth={isActive ? 2.5 : 1.5}
+              aria-hidden="true"
             />
             <span
               className={cn(
@@ -45,7 +72,7 @@ export default function BottomTabs() {
             >
               {tab.label}
             </span>
-          </Link>
+          </button>
         );
       })}
     </nav>

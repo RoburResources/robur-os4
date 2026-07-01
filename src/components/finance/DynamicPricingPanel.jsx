@@ -3,6 +3,7 @@ import GlassCard from "@/components/ui/GlassCard";
 import { Calculator, Zap, Clock, Mountain, CalendarDays, Save } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function DynamicPricingPanel() {
   const [rateCards, setRateCards] = useState([]);
@@ -51,23 +52,28 @@ export default function DynamicPricingPanel() {
 
       <div className="space-y-4">
         {/* Material selector */}
-        <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-robur-steel mb-1">Material</label>
-          <select value={material} onChange={e => setMaterial(e.target.value)} className="w-full rounded-lg border border-robur-light/40 bg-white px-3 py-2 text-xs text-robur-charcoal">
-            {loading ? (
-              <option>Loading...</option>
-            ) : rateCards.length === 0 ? (
-              <>
-                <option>Mixed Soil</option>
-                <option>Concrete</option>
-                <option>Green Waste</option>
-                <option>General Waste</option>
-              </>
-            ) : (
-              rateCards.map(r => <option key={r.id} value={r.material}>{r.material}</option>)
-            )}
-          </select>
-        </div>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-robur-steel mb-1">Material</label>
+            <Select value={material} onValueChange={setMaterial}>
+              <SelectTrigger className="w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {loading ? (
+                  <SelectItem value={material} disabled>Loading...</SelectItem>
+                ) : rateCards.length === 0 ? (
+                  <>
+                    <SelectItem value="Mixed Soil">Mixed Soil</SelectItem>
+                    <SelectItem value="Concrete">Concrete</SelectItem>
+                    <SelectItem value="Green Waste">Green Waste</SelectItem>
+                    <SelectItem value="General Waste">General Waste</SelectItem>
+                  </>
+                ) : (
+                  rateCards.map(r => <SelectItem key={r.id} value={r.material}>{r.material}</SelectItem>)
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
         {/* Weight slider */}
         <div>

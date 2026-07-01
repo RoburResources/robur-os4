@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Package, AlertTriangle, Wrench, CheckCircle, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -134,17 +135,18 @@ export default function BinTracking() {
                         <td className="px-3 py-2.5 text-xs text-robur-steel text-right">{bin.utilization_pct || 0}%</td>
                         <td className={cn("px-3 py-2.5 text-xs font-bold text-right", condColor)}>{condPct}%</td>
                         <td className="px-3 py-2.5 text-center">
-                          <select
-                            value={bin.status}
-                            onChange={e => handleStatusChange(bin, e.target.value)}
-                            className={cn("rounded-md px-2 py-0.5 text-[10px] font-bold border-0 cursor-pointer", cfg.color)}
-                          >
-                            <option value="placed">Placed</option>
-                            <option value="in_transit">In Transit</option>
-                            <option value="at_depot">At Depot</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="retired">Retired</option>
-                          </select>
+                          <Select value={bin.status} onValueChange={val => handleStatusChange(bin, val)}>
+                            <SelectTrigger className={cn("w-full text-[10px] border-0 cursor-pointer h-7", cfg.color)}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="placed">Placed</SelectItem>
+                              <SelectItem value="in_transit">In Transit</SelectItem>
+                              <SelectItem value="at_depot">At Depot</SelectItem>
+                              <SelectItem value="maintenance">Maintenance</SelectItem>
+                              <SelectItem value="retired">Retired</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </td>
                       </tr>
                     );
