@@ -16,7 +16,7 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
     if (!authChecked && !isLoadingAuth) {
       checkUserAuth();
     }
-  }, [authChecked, isLoadingAuth, checkUserAuth]);
+  }, [authChecked, isLoadingAuth]);
 
   if (isLoadingAuth || !authChecked) {
     return fallback;
