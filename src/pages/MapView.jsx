@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TopBar from "@/components/layout/TopBar";
 import GlassCard from "@/components/ui/GlassCard";
 import SemanticStatus from "@/components/ui/SemanticStatus";
@@ -8,21 +8,16 @@ import L from "leaflet";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Layers, Maximize2, Plus, Minus, Truck, ChevronRight } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
-const vehicles = [
-  { id: "ROB-101", driver: "James D.", location: "Tottenham", status: "active", coords: [-37.798, 144.865] },
-  { id: "ROB-108", driver: "Mark S.", location: "Wyndham", status: "active", coords: [-37.874, 144.657] },
-  { id: "ROB-115", driver: "Sarah L.", location: "Melbourne CBD", status: "warning", coords: [-37.8136, 144.9631] },
-  { id: "ROB-130", driver: "David W.", location: "Sunshine", status: "active", coords: [-37.788, 144.831] },
-  { id: "ROB-122", driver: "Tom R.", location: "Laverton Depot", status: "idle", coords: [-37.852, 144.743] },
-];
+const MELB_CENTER = { lat: -37.82, lng: 144.88 };
 
 const createVehicleIcon = (status) =>
   L.divIcon({
     className: "",
     html: `<div style="
       width: 36px; height: 36px;
-      background: ${status === "active" ? "#FFC400" : status === "warning" ? "#F59E0B" : "#5E6770"};
+      background: ${status === "active" ? "#FFC400" : status === "maintenance" ? "#F59E0B" : "#5E6770"};
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 0 4px rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.4);
@@ -39,10 +34,21 @@ const createVehicleIcon = (status) =>
 export default function MapView() {
   const [map, setMap] = useState(null);
   const [activeVehicle, setActiveVehicle] = useState(null);
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    base44.entities.Vehicle.list()
+      .then((data) => {
+        setVehicles(data.filter((v) => v.latitude != null && v.longitude != null));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleVehicleClick = (v) => {
     setActiveVehicle(v.id);
-    if (map) map.setView(v.coords, 15, { animate: true });
+    if (map) map.setView([v.latitude, v.longitude], 15, { animate: true });
   };
 
   return (
@@ -62,7 +68,7 @@ export default function MapView() {
             style={{ height: "calc(100vh - 180px)" }}
           >
             <SatelliteMap
-              center={{ lat: -37.82, lng: 144.88 }}
+              center={MELB_CENTER}
               zoom={12}
               onMapReady={setMap}
               className="h-full w-full"
@@ -70,12 +76,12 @@ export default function MapView() {
               {vehicles.map((v) => (
                 <Marker
                   key={v.id}
-                  position={v.coords}
+                  position={[v.latitude, v.longitude]}
                   icon={createVehicleIcon(v.status)}
                   eventHandlers={{ click: () => handleVehicleClick(v) }}
                 >
                   <Tooltip direction="top" offset={[0, -12]}>
-                    {`${v.id} · ${v.driver} · ${v.location}`}
+                    {`${v.vehicle_id}${v.driver ? ` · ${v.driver}` : ""}`}
                   </Tooltip>
                 </Marker>
               ))}
@@ -85,7 +91,7 @@ export default function MapView() {
             <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-[1000] pointer-events-none">
               <GlassCard level={3} className="px-3 py-1.5 pointer-events-auto">
                 <span className="text-[10px] font-semibold text-robur-charcoal uppercase tracking-wider">
-                  Melbourne Metro
+                  Fleet Map
                 </span>
               </GlassCard>
               <div className="flex gap-1.5 pointer-events-auto">
@@ -135,39 +141,47 @@ export default function MapView() {
                 Vehicles
               </h3>
               <span className="text-[10px] text-robur-steel/50">
-                {vehicles.length} active
+                {loading ? "Loading..." : `${vehicles.length} tracked`}
               </span>
             </div>
-            <div className="space-y-2">
-              {vehicles.map((v) => (
-                <div
-                  key={v.id}
-                  onClick={() => handleVehicleClick(v)}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-xl p-3 transition-colors cursor-pointer",
-                    activeVehicle === v.id
-                      ? "bg-robur-yellow/10"
-                      : "hover:bg-robur-charcoal/[0.03]"
-                  )}
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-robur-charcoal/5">
-                    <Truck className="h-5 w-5 text-robur-charcoal" strokeWidth={1.5} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-robur-charcoal">
-                        {v.id}
-                      </span>
-                      <SemanticStatus status={v.status} size="xs" />
+            {loading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-xl bg-robur-charcoal/[0.03] animate-pulse" />)}
+              </div>
+            ) : vehicles.length === 0 ? (
+              <p className="text-xs text-robur-steel/60 text-center py-8">No vehicles with GPS coordinates</p>
+            ) : (
+              <div className="space-y-2">
+                {vehicles.map((v) => (
+                  <div
+                    key={v.id}
+                    onClick={() => handleVehicleClick(v)}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-xl p-3 transition-colors cursor-pointer",
+                      activeVehicle === v.id
+                        ? "bg-robur-yellow/10"
+                        : "hover:bg-robur-charcoal/[0.03]"
+                    )}
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-robur-charcoal/5">
+                      <Truck className="h-5 w-5 text-robur-charcoal" strokeWidth={1.5} />
                     </div>
-                    <p className="text-[10px] text-robur-steel">
-                      {v.driver} · {v.location}
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-robur-charcoal">
+                          {v.vehicle_id}
+                        </span>
+                        <SemanticStatus status={v.status} size="xs" />
+                      </div>
+                      <p className="text-[10px] text-robur-steel">
+                        {v.driver || "Unassigned"} · {v.type || "—"}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-robur-light opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <ChevronRight className="h-4 w-4 text-robur-light opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </GlassCard>
         </motion.div>
       </div>

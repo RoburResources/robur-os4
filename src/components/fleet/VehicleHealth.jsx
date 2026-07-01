@@ -1,20 +1,20 @@
 import GlassCard from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
 
-const components = [
-  { name: "Engine", status: "Good" },
-  { name: "Tyres", status: "Good" },
-  { name: "Brakes", status: "Good" },
-  { name: "Hydraulics", status: "Good" },
-  { name: "Electrical", status: "Good" },
-  { name: "Safety Systems", status: "Good" },
-];
-
 export default function VehicleHealth({ vehicle }) {
   const health = vehicle?.health_pct ?? 0;
   const radius = 48;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (health / 100) * circumference;
+
+  const components = [
+    { name: "Fuel", status: vehicle?.fuel_pct != null ? `${vehicle.fuel_pct}%` : "—" },
+    { name: "AdBlue", status: vehicle?.adblue_pct != null ? `${vehicle.adblue_pct}%` : "—" },
+    { name: "Utilisation", status: vehicle?.utilisation_pct != null ? `${vehicle.utilisation_pct}%` : "—" },
+    { name: "Odometer", status: vehicle?.odometer != null ? `${vehicle.odometer.toLocaleString()} km` : "—" },
+    { name: "Health", status: vehicle?.health_pct != null ? `${vehicle.health_pct}%` : "—" },
+    { name: "Status", status: vehicle?.status || "—" },
+  ];
 
   return (
     <GlassCard level={2} className="p-5">
@@ -52,7 +52,7 @@ export default function VehicleHealth({ vehicle }) {
           ))}
         </div>
       </div>
-      <p className="text-[10px] text-robur-steel mt-3">{vehicle?.vehicle_id} · {vehicle?.type}</p>
+      <p className="text-[10px] text-robur-steel mt-3">{vehicle?.vehicle_id || "—"} · {vehicle?.type || "—"}</p>
     </GlassCard>
   );
 }
