@@ -20,7 +20,7 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <TopBar title="Good Morning, James" subtitle="Monday, 23 June 2026 · 5 tasks today" />
+      <TopBar title="Driver Dashboard" subtitle="Your daily operations" />
 
       {/* Personalised widget toggle */}
       <div className="flex items-center gap-2 mb-5 flex-wrap">

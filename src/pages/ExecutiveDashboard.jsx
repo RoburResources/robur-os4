@@ -79,7 +79,7 @@ export default function ExecutiveDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <TopBar title="Executive Dashboard" subtitle="Strategic overview · June 2026" />
+      <TopBar title="Executive Dashboard" subtitle="Strategic overview" />
 
       {/* Role-based view toggle */}
       <div className="flex items-center gap-2 mb-6">
