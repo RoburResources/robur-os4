@@ -30,6 +30,7 @@ export default function SatelliteMap({
 }) {
   return (
     <MapContainer
+      key="satellite-map"
       center={[center.lat, center.lng]}
       zoom={zoom}
       className={className}
