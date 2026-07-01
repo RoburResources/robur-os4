@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
-const SATELLITE_TILES =
-  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+// Google Maps satellite tiles — support very deep zoom (up to 21)
+const SATELLITE_TILES = "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+// Hybrid (satellite + labels) for better context at deep zoom
+const HYBRID_TILES = "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}";
 
 function MapController({ onReady }) {
   const map = useMap();
@@ -26,6 +28,7 @@ export default function SatelliteMap({
   children,
   onMapReady,
   className,
+  hybrid = true,
   ...props
 }) {
   return (
@@ -33,13 +36,17 @@ export default function SatelliteMap({
       key="satellite-map"
       center={[center.lat, center.lng]}
       zoom={zoom}
+      minZoom={3}
+      maxZoom={21}
       className={className}
       zoomControl={false}
       {...props}
     >
       <TileLayer
-        url={SATELLITE_TILES}
-        attribution='&copy; Esri, Maxar, Earthstar Geographics'
+        url={hybrid ? HYBRID_TILES : SATELLITE_TILES}
+        maxZoom={21}
+        maxNativeZoom={21}
+        attribution='&copy; Google'
       />
       {onMapReady && <MapController onReady={onMapReady} />}
       {children}
