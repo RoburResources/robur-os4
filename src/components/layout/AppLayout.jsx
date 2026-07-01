@@ -7,7 +7,6 @@ import PageTransition from "@/components/ui/PageTransition";
 import QuickActionMenu from "@/components/ui/QuickActionMenu";
 import OutdoorModeToggle from "@/components/ui/OutdoorModeToggle";
 import DriverModeToggle from "@/components/ui/DriverModeToggle";
-import SpatialMapOverlay from "@/components/ui/SpatialMapOverlay";
 import { TabStackProvider } from "./TabStack";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -82,7 +81,6 @@ export default function AppLayout() {
             </main>
             <BottomTabs />
             <QuickActionMenu />
-            <SpatialMapOverlay />
           </>
         ) : (
           <>
@@ -92,7 +90,6 @@ export default function AppLayout() {
                 <Outlet />
               </PageTransition>
             </main>
-            <SpatialMapOverlay />
           </>
         )}
       </div>
