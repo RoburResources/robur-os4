@@ -129,7 +129,7 @@ export default function ExecutiveDashboard() {
 
       {/* What's Next — predictive 30-minute lookahead */}
       <div className="grid grid-cols-12 gap-5 mb-5">
-        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.15 }}>
+        <motion.div className="col-span-12 lg:col-span-5 h-full" {...fadeIn} transition={{ delay: 0.15 }}>
           <WhatNextPanel />
         </motion.div>
         <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.2 }}>

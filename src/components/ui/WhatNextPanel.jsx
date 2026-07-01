@@ -50,8 +50,8 @@ export default function WhatNextPanel() {
   const timeRange = `${now.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })} – ${inTwoHours.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}`;
 
   return (
-    <motion.div {...fadeIn} transition={{ delay: 0.05 }}>
-      <GlassCard level={2} className="p-5">
+    <motion.div {...fadeIn} transition={{ delay: 0.05 }} className="h-full">
+      <GlassCard level={2} className="p-5 h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-robur-yellow/15">
