@@ -1,39 +1,39 @@
-**Welcome to your Base44 project** 
+# Robur Flow OS
 
-**About**
+**Unified operations intelligence for waste logistics, fleet management, and finance automation.**
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+Robur Flow OS is the operating system for Robur Resources — unifying dispatch, fleet telemetry, bin tracking, dockets, invoicing, supplier reconciliation, and executive analytics into a single glassmorphic interface.
 
-This project contains everything you need to run your app locally.
+## About
 
-**Edit the code in your local development environment**
+View and edit your app on [Base44.com](https://base44.com).
+
+This project contains everything you need to run Robur Flow OS locally.
+
+## Edit the code in your local development environment
 
 Any change pushed to the repo will also be reflected in the Base44 Builder.
 
-**Prerequisites:** 
+## Prerequisites
 
-1. Clone the repository using the project's Git URL 
+1. Clone the repository using the project's Git URL
 2. Navigate to the project directory
 3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+4. Create a `.env.local` file and set the right environment variables:
 
 ```
 VITE_BASE44_APP_ID=your_app_id
 VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
 ```
 
 Run the app: `npm run dev`
 
-**Publish your changes**
+## Publish your changes
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+Open [Base44.com](https://base44.com) and click on Publish.
 
-**Docs & Support**
+## Docs & Support
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+Documentation: [https://docs.base44.com](https://docs.base44.com)
 
 Support: [https://app.base44.com/support](https://app.base44.com/support)

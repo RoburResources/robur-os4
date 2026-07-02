@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-d
 import PageNotFound from "./lib/PageNotFound";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import UserNotRegisteredError from "@/components/UserNotRegisteredError";
+import UnconfiguredPreview from "@/components/UnconfiguredPreview";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -65,6 +66,8 @@ const AuthenticatedApp = () => {
     } else if (authError.type === "auth_required") {
       navigateToLogin();
       return null;
+    } else if (authError.type === "unconfigured_preview") {
+      return <UnconfiguredPreview />;
     }
   }
 

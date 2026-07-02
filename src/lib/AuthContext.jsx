@@ -19,6 +19,18 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    // Unconfigured preview: no app ID set — skip failing preflight calls
+    if (!appParams.appId) {
+      setAuthError({
+        type: 'unconfigured_preview',
+        message: 'This preview is not configured'
+      });
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+      return;
+    }
+
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
