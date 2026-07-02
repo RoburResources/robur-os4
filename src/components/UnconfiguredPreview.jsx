@@ -1,13 +1,13 @@
 import React from "react";
-import { Settings } from "lucide-react";
+import { Settings, Lock } from "lucide-react";
 
 export default function UnconfiguredPreview() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-robur-yellow mb-5">
-            <span className="text-2xl font-black text-robur-charcoal">R</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-robur-yellow mb-5 glow-yellow">
+            <Lock className="h-8 w-8 text-robur-charcoal" strokeWidth={2.5} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-robur-charcoal">Robur Flow OS</h1>
           <p className="text-sm text-robur-steel mt-1">Preview not configured</p>

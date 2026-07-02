@@ -14,6 +14,8 @@ import { base44 } from "@/api/base44Client";
 import SmartLookbackPanel from "@/components/ui/SmartLookbackPanel";
 import ClientChurnPanel from "@/components/staff/ClientChurnPanel";
 import BankingPanel from "@/components/finance/BankingPanel";
+import SiteComplianceGauge from "@/components/dashboard/SiteComplianceGauge";
+import CashflowSparkline from "@/components/dashboard/CashflowSparkline";
 
 const fadeIn = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
@@ -137,8 +139,9 @@ export default function ExecutiveDashboard() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-12 gap-5">
-        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.25 }}>
+      {/* Row 3: Alerts + Activity + Compliance */}
+      <div className="grid grid-cols-12 gap-5 mb-5">
+        <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.25 }}>
           <GlassCard level={2} className="p-5 h-full">
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="h-4 w-4 text-robur-yellow" />
@@ -177,15 +180,21 @@ export default function ExecutiveDashboard() {
           </GlassCard>
         </motion.div>
 
-        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.3 }}>
-          <GlassCard level={2} className="p-5">
+        <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.3 }}>
+          <GlassCard level={2} className="p-5 h-full">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-robur-steel mb-4">Recent Activity</h3>
             <div className="space-y-3">
               {activity.length === 0 ? (
                 <p className="text-xs text-robur-steel/60">No recent activity</p>
               ) : (
                 activity.map((a, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-xl bg-robur-charcoal/[0.03] p-3">
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35 + i * 0.05 }}
+                    className="flex items-center gap-3 rounded-xl bg-robur-charcoal/[0.03] p-3 hover:bg-robur-charcoal/[0.06] transition-colors"
+                  >
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/60">
                       <TrendingUp className="h-4 w-4 text-robur-charcoal" strokeWidth={1.5} />
                     </div>
@@ -194,23 +203,37 @@ export default function ExecutiveDashboard() {
                       <p className="text-[10px] text-robur-steel">{a.detail}</p>
                     </div>
                     <span className="text-[10px] text-robur-steel/60">{a.time}</span>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
           </GlassCard>
         </motion.div>
 
-        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.35 }}>
+        <motion.div className="col-span-12 lg:col-span-4" {...fadeIn} transition={{ delay: 0.35 }}>
+          <SiteComplianceGauge pct={metrics?.complianceRate ?? 92} sites={metrics?.totalSites ?? 18} />
+        </motion.div>
+      </div>
+
+      {/* Row 4: Lookback + Churn */}
+      <div className="grid grid-cols-12 gap-5 mb-5">
+        <motion.div className="col-span-12 lg:col-span-6" {...fadeIn} transition={{ delay: 0.4 }}>
           <SmartLookbackPanel />
         </motion.div>
 
-        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.45 }}>
+        <motion.div className="col-span-12 lg:col-span-6" {...fadeIn} transition={{ delay: 0.45 }}>
           <ClientChurnPanel />
         </motion.div>
+      </div>
 
-        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.4 }}>
+      {/* Row 5: Banking + Cashflow */}
+      <div className="grid grid-cols-12 gap-5">
+        <motion.div className="col-span-12 lg:col-span-7" {...fadeIn} transition={{ delay: 0.5 }}>
           <BankingPanel />
+        </motion.div>
+
+        <motion.div className="col-span-12 lg:col-span-5" {...fadeIn} transition={{ delay: 0.55 }}>
+          <CashflowSparkline />
         </motion.div>
       </div>
     </div>

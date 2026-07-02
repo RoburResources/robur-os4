@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const routeTitles = {
@@ -48,10 +48,10 @@ export default function MobileHeader() {
           ) : (
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-robur-yellow">
-                <span className="text-xs font-black text-robur-charcoal">R</span>
+                <Lock className="h-4 w-4 text-robur-charcoal" strokeWidth={2.5} />
               </div>
               <span className="text-sm font-bold text-robur-charcoal">
-                Robur
+                Robur Flow OS
               </span>
             </div>
           )}

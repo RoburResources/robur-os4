@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
+import IconToolbar from "./IconToolbar";
 import BottomTabs from "./BottomTabs";
 import MobileHeader from "./MobileHeader";
 import PageTransition from "@/components/ui/PageTransition";
@@ -83,14 +83,14 @@ export default function AppLayout() {
             <QuickActionMenu />
           </>
         ) : (
-          <>
-            <Sidebar />
-            <main className="ml-64 min-h-screen p-8">
+          <div className="flex gap-5 min-h-screen p-8">
+            <IconToolbar />
+            <main className="flex-1 min-w-0">
               <PageTransition>
                 <Outlet />
               </PageTransition>
             </main>
-          </>
+          </div>
         )}
       </div>
     </TabStackProvider>
